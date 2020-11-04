@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: connection.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: connection.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ *
+ * @fileOverview script for handling all the dataexchange with the server
+ */
+
+/**
+ * function to connect to the websocket server and handling incoming and
+ * outgoing data
+ * @returns {undefined}
+ */
+function connect()
+{
+    try {
+        
+        var ipadress = $('#ipadress').val();
+        connection = new WebSocket('ws://' + ipadress, []);
+        
+        /**
+        * @event onopen
+        * @description what to do when the connection is established
+        */
+        connection.onopen = function () {
+
+
+            $('#connectbutt').hide();
+            $('#discobutt').show();
+
+            //console.log(connection.binaryType)
+            //Alle Parameter senden, sobald Verbindung besteht
+            getparameters(connection);
+
+
+            var elem = document.getElementById('resendConfig');
+            var events = jQuery._data( elem, "events" );
+
+            // if there r no events attached ==> attach events
+            if (events == null)
+            {
+                $('#resendConfig').click(function () {  getparameters(connection);  });
+                $('.sysconfigInput').on('change', function() {getSysconfig(connection)});
+                $('#bandwithIn').change(function(){  getPLLfrequ(connection);  })
+                $('#basefreqin').change(function(){  getRFEConfig(connection); })
+                $('#vcodividerIn').change(function(){ getRFEConfig(connection); })
+                $('.BBprocesstextfields').on('input', function () { getBBSetup(connection);  });
+                $('.TargetRecogTextfield').on('input', function () { getBBSetup(connection);  });
+            }
+
+
+
+
+
+
+        };
+        /**
+         *
+         * @event onclose
+         * @description what to do when the connection is established
+         */
+        connection.onclose = function () {
+            $('#discobutt').hide();
+            $('#connectbutt').show();
+
+            //remove eventhandlers
+            $( "#resendConfig" ).off( "click", "**" );
+            $( ".sysconfigInput" ).off( "change", "**" );
+            $( "#bandwithIn" ).off( "change", "**" );
+            $( "#basefreqin" ).off( "change", "**" );
+            $( "#vcodividerIn" ).off( "change", "**" );
+            $( ".BBprocesstextfields" ).off( "input", "**" );
+            $( ".TargetRecogTextfield" ).off( "input", "**" );
+
+            console.log('Websocket closed');
+        };
+
+
+
+        /**
+         *
+         * @event onerror
+         * @description if there are errors log them and close the connection
+         */
+        connection.onerror = function (error) {
+
+            console.log('WebSocket Error ' + error);
+            connection.close();
+        };
+
+        /**
+         *
+         * @event onmessage
+         * @description
+         * The client expects to receive binary data and reads them
+         * into a "blob", a Binary Large OBject.
+         * When the Blob is loaded, an Uint8Array is going to the function
+         * parsemultipleFrames() which starts to parse the data;
+         */
+        connection.onmessage = function (e) {
+
+            if (typeof(e.data) == 'string' )
+            {
+                //console.log('received string: ' + e.data)
+                var str = e.data;
+                var bytes = [];
+                for (var i = 0; i &lt; str.length; ++i) {
+                    bytes.push(str.charCodeAt(i));
+                }
+                //console.log(bytes);
+                parsemultipleFrames(bytes);
+            }
+            else
+            {     
+                 //console.log('received binary data: ' + e.data)
+                 if (fps > 10 &amp;&amp; window.sceneready == true)
+                {
+                    readBlob(e.data);
+                }
+            }
+           
+
+
+        };
+    } catch (err) {
+        console.log(err.toString());
+    }
+}
+
+
+/**
+ *
+ * @description function, to disconnect and switching the 'connect'-button
+ * @returns {undefined}
+ */
+function disconnect()
+{
+    try {
+        $('#discobutt').hide();
+        $('#connectbutt').show();
+        connection.close();
+    } catch (e) {
+        console.log(e.toString());
+    }
+}
+/**
+ * reads the incoming Data from a Blob into an Uint8-Array and calls parsemultipleFrames()
+ * @param {blob} blob Binary Large Object
+ * @returns {undefined}
+ */
+function readBlob(blob)
+{
+            var reader = new FileReader();
+
+            reader.addEventListener("loadend", function ()
+            {
+                // reader.result contains the contents of blob as a typed array
+                var view = new Uint8Array(reader.result);
+                //console.log(view);
+                var begin = String.fromCharCode(view[0]);
+                parsemultipleFrames(view);
+                //if (begin === '!') { parseData(view); }
+            });
+
+            // reads the binary data from e.data
+            reader.readAsArrayBuffer(blob);
+}
+/**
+ * try to seperate the Frames with the delimiter '!' and then call parseData()
+ * for each sliced part of the Array
+ * @param {array} view the Uint8Array with the data to parse
+ * @returns {undefined}
+ */
+function parsemultipleFrames(view)
+{
+
+    //save positions of delimiter '!'
+    var delim = [];  view.forEach(function(item, index){ if (item === 33) {delim.push(index);}});
+
+    //console.log(view)
+
+    //var datArr = []
+    delim.forEach(function(item, index)
+    {
+        if (index &lt; delim.length-1)
+        {
+            // bis zum nächsten delimiter '!' lesen
+            parseData(view.slice(item, delim[index+1]));
+
+        }
+        else
+        {
+            //bis zum Ende lesen
+            parseData(view.slice(item, view.length-1));
+        }
+
+    });
+
+}
+
+
+/**
+ * look for the CMD at position '1' and then parse the Frame depending on the Command
+ * @param {array} view an Uint8Array
+ * @returns {undefined}
+ */
+function parseData(view)
+{
+    //console.log(view)
+    if ($('#LogCheckbox').is(':checked')){
+
+        var infostr = "";
+        view.forEach(function(item)
+        {
+            infostr += String.fromCharCode(item)
+        })
+      //console.log(infostr);
+      writetoLocalStorage(infostr);
+    }
+
+    var cmd = (String.fromCharCode(view[1]));
+    if (cmd == 'R')
+    {
+        //console.log('range: ' + (view.length).toString())
+        zeichneRangeFrame(view, '#0772a1', 'rangeframe')
+    }
+    if (cmd == 'C') {
+        if (spectrogramm === false)
+        {
+             //console.log('cfar: ' + (view.length).toString())
+             zeichneRangeFrame(view, '#ededed', 'cfar');
+        }
+    }
+    if (cmd == 'T') {
+        parseTargetFrame(view);
+    }
+    if (cmd == 'U') {
+        parseStatusFrame(view);
+    }
+    if (cmd == 'P') {
+        parsePhaseFrame(view);
+    }
+    if (cmd == 'D')
+    {
+        parseDopplerFrame(view);
+    }
+
+}
+
+
+/**
+ * parse the TargetFrame
+ * @param {array} view
+ * @returns {undefined}
+ */
+function parseTargetFrame(view)
+{
+
+
+    if ($('#2Dradio').is(":checked")) { deleteOldArrows();}
+    if ($('#3Dradio').is(":checked") &amp;&amp; $('#targetview').is(":checked")) { fadeaway(Backsteps, Sichtweite, 'targetarrows'); }
+
+    var format = String.fromCharCode(view[2]);
+    formatsetzen(format);
+
+
+    //addText('distance in: ' + format, 200, -184, 0.1, 6, 'distanzlabel');
+
+    var gainDB = String.fromCharCode(view[3]);
+    var targets = (view.slice(4));
+    //console.log(targets.toString());
+    var s = "";
+    for (i = 0; i &lt; targets.length - 4; i++)
+    {
+        s += (String.fromCharCode(targets[i]));
+    }
+    parseTargetData(s, format);
+
+
+}
+/**
+ * setting format, for example 'mm' or 'cm' 
+ * @param {type} format
+ * @returns {undefined}
+ */
+function formatsetzen(format)
+{
+//    console.log(format);
+//    console.log(window.format);
+    if (window.format != format) {
+
+        gridanpassen(window.FFTSize)
+    }
+    window.format = parseInt(format);
+    var formatstr = ""
+    if (format == 0) {  formatstr = "raw A/D"   }
+    if (format == 1) {  formatstr = "FFT comp"   }
+    if (format == 2) {  formatstr = "FFT mag/ph"   }
+    if (format == 3) {  formatstr = "CFAR"   }
+    if (format == 4) {  formatstr = "bin"   }
+    if (format == 5) {  formatstr = "mm"    }
+    if (format == 6) {  formatstr = "cm"   }
+    //if (format == 7) {  format = "reserved"}
+
+    $('#EinheitsLabel').html(formatstr);
+}
+/**
+ * parses the targetdata for each target,
+ * function is called from parseTargetFrame() and parseTargetString()
+ * @param {string} s a string containing the Data for all targets
+ * @param {number} format the format as Integer, 5 = 'mm'
+ * @returns {undefined}
+ */
+function parseTargetData(s, format)
+{
+
+    var targetdata = [];
+    var target;
+    for (i = 0; i &lt; s.length; i = i + 14)
+    {
+        target = s.substring(i, i + 14);
+        targetdata.push(target);
+    }
+
+    $('#targetlistbody').empty();
+    phasendiagrammleeren();
+
+     targetdata.forEach(function (targetstr)
+    {
+        var targetnum = parseInt(targetstr.substring(0, 1), 16);
+        var distanz = parseInt(targetstr.substring(1, 5), 16);
+        var DBWert = (targetstr.substring(5, 6).charCodeAt(0)) - 174;
+        var Phi = parseInt((targetstr.substring(6, 10)), 16);
+        if (Phi > 32767) {  Phi = (Phi-65535);  }
+        Phi = ((((Phi)/1000.0))).toFixed(4); //convert to 0 .. 2Pi
+        //console.log(targetnum + " " + Phi);
+        var Velocity = parseInt((targetstr.substring(10, 14)), 16);
+        if (Velocity > 32767) {  Velocity = Velocity-65535;  }
+
+        addtargetrow(targetnum, distanz, DBWert, Phi, Velocity);
+        if (phasediagramm === true)
+        {
+            var x = calckartesianX(distanz, Phi);
+            var y = calckartesianY(distanz, Phi);
+            drawsvgPhiLine(targetnum, x, y, distanz, format);
+        } 
+        else
+        {
+            if (DBWert > -140)
+            {
+                var acc = accuracy;
+                var xval = distanz / acc;
+                
+                if ($('#targetview').is(":checked"))
+                {
+                    drawArrow( xval, Phi, DBWert, TargetColors[targetnum]);
+                }
+                
+            }
+
+        }
+    });
+
+}
+/**
+ * parsing the Status-Frame 'U'
+ * @param {type} view
+ * @returns {undefined}
+ */
+function parseStatusFrame(view)
+{
+    //console.log(view)
+    var str = "";
+    for (i = 0; i &lt; view.length; i++)
+    {
+        str += (String.fromCharCode(view[i]));
+    }
+    var format = str.substring(2, 3);
+
+    formatsetzen(format);
+    window.format = parseInt(format);
+    //console.log(str)
+    var gain = str.substring(3, 4);
+    gain = parseInt(gain.charCodeAt() - 174);
+    $('#StatusGain').html(gain)
+
+    accuracy = parseInt(str.substring(4, 8), 16);
+    accuracy /= 10;
+    $('#accuracyLabel').html(accuracy);
+    //console.log(str.substring(4, 8) + ' ' + accuracy)
+
+    var laenge = parseInt(str.substring(8, 12), 16);
+    if (laenge != $('#StatusMaxRange').html()){ gridanpassen(window.FFTSize); }
+    $('#StatusMaxRange').html(laenge);
+    //console.log(str.substring(8, 12) + ' ' + laenge)
+
+    var Ramptime = parseInt(str.substring(12, 16), 16);
+    $('#ramptime').val(Ramptime);
+    //console.log(str.substring(12, 16) + ' ' + Ramptime)
+    var Bandwith = parseInt(str.substring(16, 20), 16);
+    $('#bandwith').html(Bandwith);
+    //console.log(str.substring(16, 20) + ' ' + Bandwith)
+    var TSLM = parseInt(str.substring(20, 24), 16);
+    TSLM = (1/ (parseInt(TSLM) / 100000)).toFixed(2);
+    //console.log(str.substring(20, 24) + ' ' + TSLM)
+    $('#tslm').html(TSLM);
+
+}
+
+
+/**
+ * parse the data of the phase-frame, used to visualize the
+ * phaseangles with color in the spectrogramm
+ * @param {type} view an Array containing the phaseframe-information
+ * @returns {undefined}
+ */
+function parsePhaseFrame(view)
+{
+    var Phi = 0;
+    var farbwert = 0;
+
+    for (var i = 6; i &lt; view.length - 2; i++)
+    {
+  Phi = ((1.0+((view[i]-143)/110.0))/2.0).toFixed(4); //convert to -110 .. 110 --> -1 .. 1 --> 0 .. 1
+        farbwert = (Phi);
+
+        if (usedPhaseArray == 0)
+        {
+
+
+            PhaseArray0.push(farbwert);
+            if (i == view.length - 3)
+            {
+                usedPhaseArray = 1;
+            }
+
+        }
+        else if (usedPhaseArray == 1)
+        {
+
+            PhaseArray1.push(farbwert);
+            if (i == view.length - 3)
+            {
+                usedPhaseArray = 0;
+    PhaseArray0 = [];
+            }
+
+        }
+    }
+
+    if (usedPhaseArray == 0)
+    {
+  PhaseArray0 = [];
+    }
+    if (usedPhaseArray == 1)
+    {
+  PhaseArray1 = [];
+    }
+}
+/**
+ * calculate the Difference between the phaseangles from the Frame before,
+ * not used actually
+ * @param {type} oldPhases an array with the old phaseangles
+ * @param {type} newPhases an array with the new phaseangles
+ * @returns {undefined}
+ */
+function getPhaseDelta(oldPhases, newPhases)
+{
+    //console.log('oldphase: ' + oldPhases)
+    //console.log('newphase: ' + newPhases)
+    DeltaPhase = [];
+    for (var j = 0; j &lt; oldPhases.length; j++)
+    {
+        var delta = 100-Math.abs(((oldPhases[j] - newPhases[j])))
+        DeltaPhase.push(delta);
+
+    }
+    //console.log(Delta)
+    if (usedPhaseArray == 0) {PhaseArray0 = []}
+    if (usedPhaseArray == 1) {PhaseArray1 = []}
+
+}
+/**
+ * function for parsing the Dopplerframe,
+ * not implemented yet
+ * @param {type} view
+ * @returns {undefined}
+ */
+function parseDopplerFrame(view)
+{
+    var s = "";
+    view.forEach(function(item){
+        s += String.fromCharCode(item);
+    })
+
+    //console.log(s)
+    var Werte = s.split('/');
+}
+
+/**
+ * Drawing the Range-Frame
+ * @param {array} view
+ * @param {string} hexcolor
+ * @returns {undefined}
+ */
+function zeichneRangeFrame(view, hexcolor, datatype)
+{
+    // vergleichen ob sich an der Range was geaendert hat
+    // und entsprechend Achsen anpassen
+    //console.log(view)
+
+    var datenlaenge = 0;
+    for (i = 2; i &lt;= 5; i++)
+    {
+       datenlaenge += (String.fromCharCode(view[i]));
+    }
+    datenlaenge = parseInt(datenlaenge, 16);
+    var laenge = (parseInt(window.FFTSize))
+    //console.log('Rframe fftsize client:' + laenge)
+    //console.log('Rframe fftsize server: ' + datenlaenge)
+    if (datenlaenge !== laenge)
+    {
+        window.FFTSize = parseInt(datenlaenge);
+        gridanpassen(window.FFTSize);
+        //resetview();
+    }
+
+    if ($('#2Dradio').is(":checked")) {
+        deleteolddata(datatype);
+    }
+    if (spectrogramm === false)
+    {
+        // alte Daten nach hinten ruecken
+        if ($('#3Dradio').is(":checked"))
+        {
+            Backsteps = parseInt(window.FFTSize / window.LineCount.LineCountZ);
+            Sichtweite = window.FFTSize;
+            //console.log('zeichne: ' + datatype)
+            fadeaway(Backsteps, Sichtweite, datatype);
+        }
+        //console.log(view.slice(6, view.length-2))
+        printchart(view.slice(6, view.length-2), hexcolor, datatype);
+        //drawSpline(view.slice(6, view.length-2), hexcolor, datatype);
+
+    }
+    if (spectrogramm === true)
+    {
+        if ($('#3Dradio').is(":checked"))
+        {
+            //var Scale = scaleX(window.FFTSize)
+            Sichtweite = 512;
+            if (window.FFTSize >= 512)  {  Sichtweite = 256 }
+            if (window.FFTSize &lt;= 512)  {  Sichtweite = 256 }
+            if (window.FFTSize &lt;= 256)  {  Sichtweite = 128 }
+            if (window.FFTSize &lt;= 128)  {  Sichtweite = 128 }
+
+            Backsteps = 1;
+            fadeaway(Backsteps, Sichtweite, 'rangeframe');
+            printchart(view.slice(6, view.length-2), hexcolor, datatype);
+            //drawSpline(view.slice(6, view.length-5), hexcolor, datatype);
+        }
+
+    }
+
+
+}
+
+
+/**
+ * get all parameters and then send them with a timeout of 200ms to the server when connecting
+ * @param {object} connection the connection object initialized by connect()
+ * @returns {undefined}
+ */
+function getparameters(connection)
+{
+    setTimeout(function() {  getSysconfig(connection) } , 200);
+    setTimeout(function() {  getRFEConfig(connection)} , 400);
+    setTimeout(function () { getPLLfrequ(connection)} , 600);
+    setTimeout(function () { getBBSetup(connection) }, 800);
+
+}
+
+
+/**
+ * function to get the parameters of the Systemconfig and then send them to the server
+ * @param {object} connection the connection object initialized by connect()
+ * @returns {undefined}
+ */
+var getSysconfig = function(connection)
+{
+
+    var endstr = "\r\n";
+    // get sys config bools
+    var trg = booltoInt(($('#trg').prop('checked')));
+    var slf = booltoInt(($('#slf').prop('checked')));
+    var slp = booltoInt(($('#slp').prop('checked')));
+    var dc = booltoInt(($('#dc').prop('checked')));
+
+    var r = booltoInt(($('#r').prop('checked')));
+    var c = booltoInt(($('#c').prop('checked')));
+    var p = booltoInt(($('#p').prop('checked')));
+
+    var tl = booltoInt(($('#tl').prop('checked')));
+    var st = booltoInt(($('#st').prop('checked')));
+    var ex = booltoInt(($('#ex').prop('checked')));
+
+    var ser1 = booltoInt(($('#ser1').prop('checked')));
+    var ser2 = booltoInt(($('#ser2').prop('checked')));
+
+    if (trg === 1) {
+        trg = Math.pow(2, 0);
+    } else {
+        trg = 0;
+    }
+    if (slf === 1) {
+        slf = Math.pow(2, 1);
+    } else {
+        slf = 0;
+    }
+    if (slp === 1) {
+        slp = Math.pow(2, 2);
+    } else {
+        slp = 0;
+    }
+    if (dc === 1) {
+        dc = Math.pow(2, 3);
+    } else {
+        dc = 0;
+    }
+    if (r === 1) {
+        r = Math.pow(2, 4);
+    } else {
+        r = 0;
+    }
+    if (c === 1) {
+        c = Math.pow(2, 5);
+    } else {
+        c = 0;
+    }
+    if (p === 1) {
+        p = Math.pow(2, 6);
+    } else {
+        p = 0;
+    }
+    if (tl === 1) {
+        tl = Math.pow(2, 7);
+    } else {
+        tl = 0;
+    }
+    if (st === 1) {
+        st = Math.pow(2, 8);
+    } else {
+        st = 0;
+    }
+    if (ex === 1) {
+        ex = Math.pow(2, 9);
+    } else {
+        ex = 0;
+    }
+
+    if (ser1 === 1) {
+        ser1 = Math.pow(2, 10);
+    } else {
+        ser1 = 0;
+    }
+    if (ser2 === 1) {
+        ser2 = Math.pow(2, 11);
+    } else {
+        ser2 = 0;
+    }
+
+
+
+    var summe = trg + slf + slp + dc + r + c + p + tl + st + ex + ser1 + ser2;
+    summe = summe.toString(16);
+    var sysconfig = (hexauffuellen(summe, 8));
+    sysconfig = "!S" + sysconfig.toUpperCase() + endstr;
+    //console.log(sysconfig);
+    setTimeout(function () {
+        connection.send(sysconfig);
+    }, 100);
+}
+
+/**
+ * get the RFEConfig and send it to the server
+ * @param {object} connection the connection object initialized by connect()
+ * @returns {undefined}
+ */
+function getRFEConfig(connection)
+{
+    var endstr = "\r\n";
+    var basefrequ = parseInt($('#basefreqin').val());
+    //console.log('basefrequ: ' + basefrequ)
+    basefrequ = shiftIt(basefrequ, 0);
+    //console.log('basefrequ formated : ' + basefrequ)
+
+    var VCOdivider = parseInt($('#vcodividerIn').val());
+    //console.log('vcodivider: ' + VCOdivider);
+    VCOdivider = shiftIt(VCOdivider, 19);
+    //console.log('VCO formated: ' + VCOdivider);
+
+    var RFEConfig = basefrequ + VCOdivider;
+    RFEConfig = RFEConfig.toString(16);
+    RFEConfig = '!F' + hexauffuellen(RFEConfig.toUpperCase(), 8) + endstr;
+    //console.log(RFEConfig);
+    setTimeout(function () {
+        connection.send(RFEConfig);
+    }, 100);
+}
+/**
+ * get the PLLfrequ and send it to the server
+ * @param {object} connection the connection object initialized by connect()
+ * @returns {undefined}
+ */
+function getPLLfrequ(connection)
+{
+    var endstr = "\r\n";
+    //get bandwith from GUI 16 Bits linksshift 16
+    var bandwith = parseInt($('#bandwithIn').val());
+    //console.log('bandwith: ' + bandwith);
+    bandwith = shiftIt(bandwith, 0);
+    //console.log('bandwidth formated: ' + bandwith);
+    bandwith = hexauffuellen(bandwith.toString(16), 8);
+    var PLLfrequ = '!P' + bandwith.toUpperCase() + endstr;
+    setTimeout(function () {
+        connection.send(PLLfrequ);
+    }, 100);
+}
+/**
+ * get the BBSetup and send it to the server
+ * @param {object} connection the connection object initialized by connect()
+ * @returns {undefined}
+ */
+function getBBSetup(connection)
+{
+
+    var endstr = "\r\n";
+
+    //BBSetup
+    var BBSetup = "";
+    var samplefrequ = $('#Samplefrequamount').val();
+    var numofSample = $('#NumofSampleamount').val();
+    var numofRamps = $('#NumofRampsamount').val();
+    var downsamplamount = $('#Downsamplingamount').val();
+    var FFTsize = $('#FFTsizeamount').val();
+    var AverageN = $('#AverageNamount').val();
+    var CFGuard = $('#CFGuardamount').val();
+    var CFSize = $('#CFSizeamount').val();
+    var CFTreshold = $('#CFTresholdamount').val();
+    var Format = $('#FormatAmount').val();
+
+
+    //console.log('samplefrequ: ' + samplefrequ);
+    //console.log('numofSample: ' + numofSample);
+    //console.log('numofRamps: ' + numofRamps);
+    //console.log('downsamplamount: ' + downsamplamount);
+    //console.log('FFTsize:' + FFTsize);
+
+    //console.log('AverageN: ' + AverageN);
+    //console.log('CFGuard: ' + CFGuard);
+    //console.log('CFSize: ' + CFSize);
+    //console.log('CFTreshold: ' + CFTreshold);
+
+    samplefrequ = shiftIt(samplefrequ, 0);
+    numofSample = shiftIt(numofSample, 3);
+    numofRamps = shiftIt(numofRamps, 6);
+    downsamplamount = shiftIt(downsamplamount, 9);
+    FFTsize = shiftIt(FFTsize, 12);
+
+    AverageN = shiftIt(AverageN, 15);
+    CFGuard = shiftIt(CFGuard, 18);
+    CFSize = shiftIt(CFSize, 20);
+    CFTreshold = shiftIt(CFTreshold, 24);
+    Format = shiftIt(Format, 29);
+
+    BBSetup = samplefrequ + numofSample + numofRamps + downsamplamount + FFTsize + AverageN + CFGuard + CFSize + CFTreshold + Format;
+    //console.log(BBSetup);
+    BBSetup = BBSetup.toString(16);
+    //console.log(BBSetup);
+    BBSetup = '!B' + hexauffuellen(BBSetup.toUpperCase(), 8) + endstr;
+    //console.log('BBSetup: ' + BBSetup);
+    setTimeout(function () { connection.send(BBSetup);    }, 100);
+
+}
+
+/**
+ * converting a boolean to an Integer
+ * @param {bool} val true or false
+ * @returns {Number}
+ */
+function booltoInt(val)
+{
+    if (val === true)
+        val = 1;
+    if (val === false)
+        val = 0;
+    return val;
+}
+
+/**
+ * make sure shift operations succeed in javascript because numbers in JS
+ * are 32Bit-signed Integers so one Bit is missing when calculating with big numbers
+ * @param {number} param the number which should be left-shifted
+ * @param {number} shiftparam how often should be shifted
+ * @returns {shiftIt.result}
+ */
+function shiftIt(param, shiftparam)
+{
+    //console.log(param + ' ' + shiftparam);
+
+    var parambitstr = (param >>> 0).toString(2);
+    //console.log(parambitstr);
+    var result = param;
+    if ((parambitstr.length + shiftparam) >= 31)
+    {
+        //per schleife multiplizieren
+        for (i = 0; i &lt;= shiftparam - 1; i++) {
+            result *= 2;
+        }
+        return result;
+    } else
+    {
+        //linkshiften
+        result = param &lt;&lt; shiftparam;
+        return result;
+    }
+
+}
+
+/**
+ * fills the hexnumber at the beginning with zeros to the specified amount of digits
+ * @param {string} hexzahl an hexadezimal number as string
+ * @param {int} stellen how much digits the hexnumber should have
+ * @returns {String}
+ */
+function hexauffuellen(hexzahl, stellen)
+{
+    var zerostr = "";
+    var laenge = hexzahl.length;
+    var diff = stellen - laenge;
+    for (i = 0; i &lt; diff; i++)
+    {
+        zerostr += '0';
+    }
+
+    var neuehex = zerostr + hexzahl;
+    return neuehex;
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Events</h3><ul><li><a href="global.html#event:onclose">onclose</a></li><li><a href="global.html#event:onerror">onerror</a></li><li><a href="global.html#event:onmessage">onmessage</a></li><li><a href="global.html#event:onopen">onopen</a></li></ul><h3>Global</h3><ul><li><a href="global.html#booltoInt">booltoInt</a></li><li><a href="global.html#connect">connect</a></li><li><a href="global.html#disconnect">disconnect</a></li><li><a href="global.html#formatsetzen">formatsetzen</a></li><li><a href="global.html#getBBSetup">getBBSetup</a></li><li><a href="global.html#getparameters">getparameters</a></li><li><a href="global.html#getPhaseDelta">getPhaseDelta</a></li><li><a href="global.html#getPLLfrequ">getPLLfrequ</a></li><li><a href="global.html#getRFEConfig">getRFEConfig</a></li><li><a href="global.html#getSysconfig">getSysconfig</a></li><li><a href="global.html#hexauffuellen">hexauffuellen</a></li><li><a href="global.html#parseData">parseData</a></li><li><a href="global.html#parseDopplerFrame">parseDopplerFrame</a></li><li><a href="global.html#parsemultipleFrames">parsemultipleFrames</a></li><li><a href="global.html#parsePhaseFrame">parsePhaseFrame</a></li><li><a href="global.html#parseStatusFrame">parseStatusFrame</a></li><li><a href="global.html#parseTargetData">parseTargetData</a></li><li><a href="global.html#parseTargetFrame">parseTargetFrame</a></li><li><a href="global.html#readBlob">readBlob</a></li><li><a href="global.html#shiftIt">shiftIt</a></li><li><a href="global.html#zeichneRangeFrame">zeichneRangeFrame</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Mon May 02 2016 11:18:14 GMT+0200 (CEST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

@@ -1,0 +1,419 @@
+
+*{
+    position : relative;
+    font-family: "Trebuchet", "arial";
+    z-index:0;
+    overflow: hidden;
+
+}
+html
+{
+    background: linear-gradient( #303030, black);
+    padding: 0px;
+}
+
+body
+{
+
+    width: 100%;
+    color : black;
+    padding : 0px;
+    margin: 0px;
+    min-width: 350px;
+
+}
+input
+{
+    float: left;
+    width: 100%;
+    color: #9b3a00;
+    position: relative;
+    margin-bottom: 6px;
+
+}
+
+
+#sysconfigtable
+{
+    width: 100%;
+    font-size: 12pt;
+    padding: 10px;
+}
+
+#newpreset
+{
+    width: 100%;    
+}
+#newpreset > input
+{
+    margin-left: 5%;
+}
+#oldpresets
+{    
+    margin-top: 5%;
+    margin-bottom: 5%;
+}
+.presetlabel
+{
+    width: 100%;
+    margin-top: 5%;
+    margin-left: 6%;
+}
+.presetbutt
+{
+
+    margin-top: 5%;
+    margin-bottom: 5%;
+    background-color: inherit;
+    color: whitesmoke;
+    border-radius: 1px;
+    width: 45%;
+
+}
+
+.RFNumField
+{
+    width: 100%;
+    text-align: right;
+}
+
+tr > td > input
+{
+    float: right;
+}
+div.rand
+{
+
+    background-color: #FF8700;
+    opacity: 0.6;
+    background: linear-gradient(to right, orange, white);
+}
+
+
+#errorpanel
+{
+    font-size: 8pt;
+    color: white;
+}
+
+.errordiv
+{
+    font-size: 8pt;
+    color: white;
+    width: 15%;
+    float: left;
+}
+
+.infobarbutt
+{
+    margin:2%;
+    margin-left: 5%;
+    margin-right: 5%;
+    padding: 0px;
+    background-color: inherit;
+    color: whitesmoke;
+    border-radius: 1px;
+    width: 80%;
+}
+
+.rfbarbutt
+{
+    margin:2%;
+    margin-left: 5%;
+    margin-right: 5%;
+    padding: 0px;
+    background-color: inherit;
+    color: whitesmoke;
+    border-radius: 1px;
+    width:65px;
+}
+
+.slider-vertical
+{
+
+    float : right;
+}
+
+
+svg
+{
+
+    display : none;
+    width : 100%;
+    /* height: auto; */
+    /* background-color: #4D98B8; */
+    background-color: none;
+    float: right;
+}
+ellipse
+{
+
+    fill : rgba(0,0,0,0);
+    stroke : #000;
+    stroke-width: 1;
+}
+
+label
+{
+    width: 100%;
+}
+
+
+.slider
+{
+
+    width : 100%;
+}
+.slider-vertical
+{
+
+    width : 10px;
+}
+
+button
+{
+    width : 100%
+}
+.togglebutton
+{
+    width : 40%;
+    float: left;
+}
+.panel
+{
+    height : auto;
+/*    background: linear-gradient(grey, whitesmoke);*/
+    background-color: inherit;
+    color: white;
+    border-radius: 5px;
+    margin: 0px;
+    opacity: 0.9;
+
+
+}
+.drawpanel
+{
+
+    width: 79%;
+    float: left;
+/*    overflow: auto;
+    resize: horizontal;*/
+}
+.group
+{
+
+    zoom: 1;
+    width: 99%;
+    float: left;
+    font-size: small;
+
+
+}
+
+
+div.randleft
+{
+    /* display: none; */
+    background: linear-gradient( orange, white);
+    opacity: 0.5;
+    height: 800px;
+    float: left;
+    width: 1%;
+
+
+
+}
+div.randleft > p
+{
+    height: 20%;
+    font-weight: bold;
+    text-align: center;
+}
+
+.accordcontainer
+{
+
+    width: 20%;
+    float: left;
+
+/*    background-color: inherit;*/
+    background: linear-gradient(to left, black, #4D98B8);
+    overflow: auto;
+
+
+}
+.accordion
+{
+    padding: 0px;
+
+}
+ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #333;
+}
+
+li {
+
+    float: left;
+    width: 25%;
+}
+
+li a {
+    width: auto;
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+}
+.untermenu
+{
+    width: 33%;
+    position: absolute;
+    color: white;
+    display: none;
+    top: 0px;
+    z-index: 0;
+    opacity: 0.5;
+    background-color: #4D98B8;
+}
+.untermenu > input
+{
+    width: 20%
+}
+#statuscontainer
+{
+    color: white;
+}
+
+
+/* Change the link color on hover */
+li a:hover {
+    background-color: #ffa239;
+}
+.active {
+    background-color: #ffa239;
+}
+.inactive
+{background-color: #505050;}
+
+
+#targetlistContainer
+{
+    position: absolute;
+    top: 200px;
+    width: 15%;
+    min-width: 220px;
+/*    border-radius: 8px;*/
+    opacity: 0.9;
+    font-size: 10pt;
+/*    background-color: #4D98B8;*/
+    color: #37FDFC;
+}
+#targetlisttable
+{
+    width: 100%
+}
+
+.sysconfigDiv
+{
+    width: 100%;
+}
+.OutputFrameInput
+{
+    width: 100%;
+}
+.sysconfigInput
+{
+    width: 10%;
+    float: left;
+    margin-bottom: 12px;    
+}
+.OutputFrameInput
+{
+    width: 10%;
+    float: left;
+    margin-bottom: 12px;    
+}
+
+.sysconfigLabel
+{
+    width: 80%;
+    float: right;
+    margin-bottom: 12px;
+}
+.OutputFrameLabel
+{
+    width: 80%;
+    float: right;
+    margin-bottom: 12px;
+}
+.BBProcessLabel
+{
+    width: 30%;
+}
+.BBProcessSlider
+{
+    margin-bottom: 12px;
+}
+.BBprocesstextfields
+{
+    margin-bottom: 15px;
+    opacity: 0.1;
+}
+.TargetRecogTextfield
+{
+    margin-bottom: 15px;
+    opacity: 0.1;
+}
+.TargetRecogSlider
+{
+    margin-bottom: 12px;
+}
+#datgui
+{
+    width : 100%;
+    min-width: 200px;
+    float: left;
+    padding: 0px;
+}
+
+#datgui > * > *
+{
+    background-color: lightgray;
+    color: black;
+    width: auto;
+
+}
+div.guidat-slider-bg
+{
+    min-width: 0px;
+    width: 40%;
+    background-color: whitesmoke;
+}
+div.guidat-slider-fg
+{
+    width: 100%;
+    min-width: 0px;
+    background-color: #4D98B8;
+}
+
+.guidat-controller.number
+{
+
+    width : 100%;
+}
+
+span.guidat-propertyname
+{
+    width: 20%;
+    min-width: 50px;
+}
+#CamPosX{  width: 20%; min-width: 30px; background-color: whitesmoke; color: #9b3a00}
+#CamPosY{  width: 20%; min-width: 30px; background-color: whitesmoke; color: #9b3a00}
+#CamPosZ{  width: 20%; min-width: 30px; background-color: whitesmoke; color: #9b3a00}
+#CamRotX{  width: 20%; min-width: 30px; background-color: whitesmoke; color: #9b3a00}
+#CamRotY{  width: 20%; min-width: 30px; background-color: whitesmoke; color: #9b3a00}

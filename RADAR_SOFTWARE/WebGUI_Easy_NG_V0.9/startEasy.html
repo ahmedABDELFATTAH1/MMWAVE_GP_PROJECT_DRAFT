@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta  content="text/html; charset=UTF-8"  http-equiv="content-type">
+        <title>Siliconradar WebGUI</title>
+        <meta  name="viewport"  content="width=device-width, user-scalable=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0">
+
+<!--        add Javascript Files from extern Sources (CDN)-->
+
+<!--        <script src="http://threejs.org/build/three.min.js"></script>-->
+<!--        <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r79/three.min.js"></script>-->
+        <!--<script src="//d3js.org/d3.v3.min.js" charset="utf-8"></script> -->
+        <!-- jquery ui sourcecode -->
+        <!--   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"> </script>
+              <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script> -->
+        <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/async/1.5.2/async.min.js"></script> -->
+        <!-- script for asynchron functions -->
+
+		<!-- needed for electron-->		
+		<script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
+
+
+<!-- add Javascriptfiles and Librarys from local Project Folder       -->
+        <script  src="js/jquery.js"></script>
+        <script  src="js/jquery-ui.min.js"></script>
+        <script  src="js/typeface-0.15.js"></script>
+        <script  src='js/DAT.GUI.min.js'></script>
+        <script  src="js/three.js"></script>
+        <!-- 3D Engine -->
+        <script  src="js/stats.js"></script>
+        <script  src="js/helvetiker_regular.typeface.js"></script>
+        <!-- importieren der 3DSchrift-->
+        <script  src="js/cameracontrols.js"></script>
+         <script  src="js/OrbitControls.js"></script>
+        <!-- Camera controls -->
+        <script  src="js/d3.min.js"></script>
+        <!-- script for svg charts -->
+        <script  src="js/controle.js"></script>
+        <!-- script for normal GUI Controls -->
+        <script  src="js/connection.js"></script>
+
+        <!-- script for serverconnection and data handling -->
+        <script  src="js/globals.js"></script>
+        <!-- add Global Variables -->
+        <script  src="js/screen1.js"></script>
+        <!-- script for visualizing the data -->
+        <script src="js/logging.js"></script>
+        
+        <!-- needed for electron -->
+        <script>if (window.module) module = window.module;</script>
+
+        <!-- stylesheets -->
+        <!--   <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/themes/ui-lightness/jquery-ui.css"> -->
+        <link  rel="stylesheet"  href="css/jquery-ui.min.css"  type="text/css">
+        <link  rel="stylesheet"  href="css/style.css"  type="text/css">
+
+    </head>
+    <body  onload="initscreen1();">
+
+<!--        add the accordion on the left Side of the Screen-->
+        <div  id="accordion"  class="accordcontainer">
+			<div> 
+				<font color="white">WebGUI-v0.9b (Easy-NG)</font>
+			</div>
+            
+            <div id="errorpanel"> Errors:</div>
+                <div id="err1" class="errordiv"> CRC</div>
+                <div id="err2" class="errordiv">RFE</div>
+                <div id="err3" class="errordiv">PLL</div>
+                <div id="err4" class="errordiv">BB</div>
+                <div id="err5" class="errordiv">PRC</div>
+				           
+            <button  class="infobarbutt"  id="connectbutt"  onclick="connect();">Connect</button>
+            <button  class="infobarbutt"  id="discobutt"  onclick="disconnect();" style="display : none;">Disconnect</button>
+            <button type="button" id="resendConfig" class="infobarbutt">Resend config</button>
+            <button type="button" id="resetviewButt" class="infobarbutt" onclick="resetview();">Reset view</button>
+			
+            <div  class="group">
+
+                <h3  class="accordion">COM</h3>
+
+
+                <div  class="panel"> IP&nbsp;address: <input  id="ipadress"  value="localhost:9090" type="text">
+                </div>
+            </div>
+            
+            
+            <div  class="group">
+
+                <h3  class="accordion">Presets</h3>
+
+                <div  class="panel">
+                    
+                    <button title="please make sure, that cookies(firefox) / localStorage(chrome) are enabled and your browser does not delete them, when you close the session" id="newpresetbutt" class="presetbutt" onclick="opennewpresetdialog();">New</button>
+                    
+                    <div id="oldpresets">
+                        <select id="presetselect" style="width: 100%; margin-bottom: 5%;" onchange="loaddescription();">                                                      
+                        </select>
+                        <label id="description" class="presetlabel"></label>
+                        <div>
+                            <button id="LoadConfigButt" class="presetbutt" onclick="loadconfig();">Load</button>
+                            <button id="DelConfigButt" class="presetbutt" onclick="deleteConfig();">Delete</button>
+                        </div>
+                        
+                    </div>                                        
+                    
+                    <div id="newpreset" style="display : none;">
+              
+                        <label for="presetname" class="presetlabel"> Preset name: </label><br>
+                            <input  id="presetname"  value="" type="text">
+                        <label for="presetdescr" class="presetlabel"> Description: </label><br>
+                            <input  id="presetdescr"  value="" type="text">                                                                                                            
+
+                                <button id="SaveConfigButt" class="presetbutt" onclick="saveConfig();">Save</button>
+                    </div> 
+                
+                </div>
+            </div>
+
+            <div class="group">
+                <h3 class="accordion">System Configuration</h3>
+                
+                <div id="sysconfigpanel" class="panel">
+                    
+                    <form>
+
+						<div class="sysconfigDiv">
+                            <input  id="slf" name="sl" type="radio" checked="" class="sysconfigInput"><label for="slf" class="sysconfigLabel">Self-trigger</label>
+                        </div>
+						<div class="sysconfigDiv">
+                            <label for="slp" class="sysconfigLabel">Manual trigger</label><input  id="slp" name="sl"  type="radio" class="sysconfigInput">
+                        </div>
+
+						<div class="sysconfigDiv">
+                            <input  id="trg"  type="checkbox" class="sysconfigInput"><label for="trg" class="sysconfigLabel">Pre-trigger</label>
+                        </div>
+
+                        <label id="TriggerDelayLabel" class="BBProcessLabel" style="width: 100%">Trigger delay: </label>
+                        
+                        <div>
+							<div  id="TriggerDelaySlider" class="BBProcessSlider" style="width: 80%; float: left;"></div>
+							<input class="sysconfigInput" id="TriggerDelayAmount" value="0" style="width: 10%; float: right; opacity: 0.7;" type="text">
+                        </div>
+
+                        <div class="sysconfigDiv">
+                            <input  id="ser1" name="ser" type="radio" class="sysconfigInput"><label for="ser1" class="sysconfigLabel">SER1</label>
+                        </div>
+                        <div class="sysconfigDiv">
+                            <input  id="ser2" name="ser"  type="radio" checked="" class="sysconfigInput"><label for="ser2" class="sysconfigLabel"> SER2</label>
+							
+                        </div>
+                        <div class="sysconfigDiv">
+                            <input  id="AGCMode" type="checkbox" checked="" class="sysconfigInput"><label for="AGCMode" class="sysconfigLabel"> AGC-Mode </label>
+                        </div>
+                    </form>
+                    
+                    <div class="sysconfigDiv">
+                        <label id="GainLabel" class="" style="width: 100%">Manual gain mode: </label><br>
+                        <div  id="GainSlider" class="BBProcessSlider" style="width: 80%; float: left;"></div>
+                        <input class="sysconfigInput" id="GainAmount" value="0" style="width: 10%; float: right; opacity: 0.7;" type="text">
+					</div>	
+					
+					 <div class="sysconfigDiv">
+					 Coupling&nbsp;Mode:
+                        <label id="CouplingLabel" class="" style="width: 100%">AC </label><br>
+                        <div  id="CouplingSlider" class="BBProcessSlider" style="width: 80%; float: left;"></div>
+                        <input class="sysconfigInput" id="Coupling" value="1" style="width: 10%; float: right; opacity: 0.7;" type="text">
+					</div>	
+					
+                    <div class="sysconfigDiv">
+						Distance&nbsp;Unit:
+						<label id="UnitLabel" class="" style="width: 100%"> mm </label><br>
+                        <div  id="UnitSlider" class="BBProcessSlider" style="width: 80%; float: left;"></div>
+						<input class="sysconfigInput" id="UnitAmount" value="0" style="width: 10%; float: right; opacity: 0.7;" type="text">
+                        		
+				    </div>	
+                     <div class="sysconfigDiv">					
+                    LED:
+                        <select id="LEDselect">
+                            <option value="0">off</option>
+                            <option value="1" selected="selected">1st target rainbow</option>                        
+                        </select>
+						</div>
+
+                </div>
+
+            </div>
+			<div  class="group">
+            <h3 class="accordion">Output Data</h3>
+                
+                <div id="outputpanel" class="panel">
+                    
+                    <form>	
+						
+                        <div class="outputpanelDiv">
+                            <input  id="raw"   type="checkbox" class="OutputFrameInput"><label for="raw"  class="OutputFrameLabel">Raw ADC - no WebGUI output </label>
+                        </div>
+                        <div class="outputpanelDiv">
+                            <input  id="cmp"   type="checkbox" class="OutputFrameInput"><label for="cmp" class="OutputFrameLabel">Complex FFT - no WebGUI output</label>
+
+                        </div>
+                        
+                        <div class="outputpanelDiv">
+                            <input  id="p"   type="checkbox" class="OutputFrameInput"><label for="p" class="OutputFrameLabel">Phase</label>
+                        </div>
+                        <div class="outputpanelDiv">
+                            <input  id="r"   type="checkbox" checked="" class="OutputFrameInput"><label for="r" class="OutputFrameLabel">Magnitude/Range</label>
+                        </div>
+                        <div class="outputpanelDiv">
+                            <input  id="c"   type="checkbox" checked="" class="OutputFrameInput"><label for="c" class="OutputFrameLabel">CFAR</label>
+                        </div>
+                        <div class="outputpanelDiv">
+                            <input  id="tl"   type="checkbox" checked="" class="OutputFrameInput"><label for="tl" class="OutputFrameLabel">Target List</label>
+                        </div>
+                        <div class="outputpanelDiv">
+                            <input  id="st"   type="checkbox" checked="" class="OutputFrameInput"><label for="st" class="OutputFrameLabel">Status Frame</label>
+                        </div>
+						 <div class="outputpanelDiv">
+                            <input  id="err"   type="checkbox" checked="" class="OutputFrameInput"><label for="err" class="OutputFrameLabel">Error Frame</label>
+                        </div>
+
+                        
+                    </form>
+					<div class="outputpanelDiv">
+						Protocol&nbsp;Type&nbsp:
+						<label id="OutputFormatLabel" for="FormatSlider"> WebGUI  </label><br>
+                        <div  id="ProtocolSlider" class="BBProcessSlider" style="width: 80%; float: left;"></div>
+                        <input class="OutputFrameInput" id="ProtocolID" value="0" style="width: 10%; float: right; opacity: 0.7;" type="text"><br>
+						
+						Magnitude Scale:
+						<label id="ScaleLabel" for="ScaleSlider"> Log  </label><br>
+                        <div  id="ScaleSlider" class="BBProcessSlider" style="width: 80%; float: left;"></div>
+                        <input class="OutputFrameInput" id="ScaleID" value="0" style="width: 10%; float: right; opacity: 0.7;" type="text"><br>
+                    </div>				
+					                    
+                </div>
+
+            </div>
+
+            <div  class="group">
+                <h3  class="accordion">RF Parameters</h3>
+                <div id="RFparamspanel"  class="panel">
+
+                    <table>
+                        <tbody>                          
+                            <tr>
+                                <td colspan="2">fmin&nbsp;[MHz]</td>
+                                <td>fmax&nbsp;[MHz]</td>
+                            </tr>
+                            <tr>
+                                <td colspan="2"><label id="minFrequ">0</label> </td>
+                                <td><label id="maxFrequ">100000</label></td>
+                                
+                            </tr>
+							<tr>
+								<td><button id="FEScanButt" class="rfbarbutt">FEauto</button></td>
+								<td><button id="FrequScanButt" class="rfbarbutt">fscan</button></td>
+								<td><button id="SetMaxFrequ" class="rfbarbutt">maxBW</button></td>
+                            </tr> 
+                            <tr>
+                                <td colspan="2"><label for="frontendselect"> Front End: </label> </td>
+                                <td>
+                                    <div>
+                                        <select id="frontendselect">
+                                        <option value="2">24 GHz</option>
+                                        <option value="4" selected="selected">122 GHz</option> 
+										<option value="8">120 GHz Wide </option>
+                                        <option value="16">60 GHz</option>
+										<option value="64">300 GHz</option>
+										
+                                    </select>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="2"><label for="vco-divider"> VCO Divider: </label></td>
+                                <td><input  id="vcodividerIn" name="vco-divider" value="64" min="0" max="4096"  class="RFNumField" type="number"></td>
+                            </tr>
+                            <tr>
+                                <td colspan="2"><label for="bandwith"> Bandwidth (MHz): </label></td>
+                                <td><input  id="bandwithIn" name="bandwith"  value="5000" min="-65536" max="65534"  class="RFNumField" type="number" step="2"></td>
+                            </tr>
+                            <tr>
+                                <td colspan="2"><label for="basefrequ">Base frequency (MHz): </label></td>
+                                <td><input  id="basefreqin" name="basefrequ"  value="120000.000" min="0" max="524288.000" class="RFNumField" type="number" step="0.250"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                 
+                </div>
+            </div>
+
+            <div  class="group">
+                <h3  class="accordion">BB Processing</h3>
+                <div  id="BBProcPanel"  class="panel">
+
+                    <div>
+						<table>
+							<tbody>
+								<tr>
+									<td><label for="">Ramp time: </label></td>
+									<td><input id="ramptime" name=""  value="1000" min="0" max="99999" class="RFNumField" type="text" pattern="[0-9]" readonly style="opacity: 0.7"></td>
+									<td><label for=""> us</label></td>
+								</tr>
+							</tbody>
+						</table>
+                    </div>
+
+                    <div class="BBProctextfields">
+						ADC&nbsp;clock&nbsp;divider:
+                        <label id="AdcClockDivLabel" class="" style="width: 100%"> </label><br>
+                        <div  id="adcClockDividerSlider" class="BBProcessSlider" style="width: 80%; float: left;"></div>
+                        <input class="BBprocesstextfields" id="adcClockDivideramount" value="5" style="width: 10%; float: right; opacity: 0.7;" type="text"><br>
+						
+						Number&nbsp;of&nbsp;samples:
+						<label id="NumofSamplLabel" class="" style="width: 100%"> 512 </label><br>
+                        <div  id="NumofSamplSlider" class="BBProcessSlider" style="width: 80%; float: left;"></div>
+                        <input class="BBprocesstextfields" id="NumofSampleamount" value="4" style="width: 10%; float: right; opacity: 0.7;" type="text"><br>
+						
+						Number&nbsp;of&nbsp;ramps:
+						<label id="numofRampsLabel" class="" style="width: 100%"> 16 </label><br>
+                        <div  id="NumofRampsSlider" class="BBProcessSlider" style="width: 80%; float: left;"></div>
+                        <input class="BBprocesstextfields" id="NumofRampsamount" value="4" style="width: 10%; float: right; opacity: 0.7;" type="text"><br>
+						
+						DC&nbsp;Cancel:
+						<label id="DCCancelLabel" class="" style="width: 100%"> ON </label><br>
+                        <div  id="DCCancelSlider" class="BBProcessSlider" style="width: 80%; float: left;"></div>
+                        <input class="BBprocesstextfields" id="DCCancelamount" value="1" style="width: 10%; float: right; opacity: 0.7;" type="text"><br>						
+								
+						FIR&nbsp;Filter:
+						<label id="FIRLabel" class="" style="width: 100%"> OFF </label><br>
+                        <div  id="FIRSlider" class="BBProcessSlider" style="width: 80%; float: left;"></div>
+                        <input class="BBprocesstextfields" id="FIRamount" value="0" style="width: 10%; float: right; opacity: 0.7;" type="text"><br>
+						
+						Downsampling:
+						<label id="downsamplLabel" class="" style="width: 100%"> 0 </label><br>
+                        <div  id="DownsamplingSlider" class="BBProcessSlider" style="width: 80%; float: left;"></div>
+                        <input class="BBprocesstextfields" id="Downsamplingamount" value="0" style="width: 10%; float: right; opacity: 0.7;" type="text"><br>
+						
+						Windowing:
+						<label id="WindowLabel" class="" style="width: 100%"> ON </label><br>
+                        <div  id="WindowSlider" class="BBProcessSlider" style="width: 80%; float: left;"></div>
+                        <input class="BBprocesstextfields" id="Windowamount" value="1" style="width: 10%; float: right; opacity: 0.7;" type="text"><br>
+						
+						FFT&nbsp;size:
+						<label id="FFTsizeLabel" class="" style="width: 100%"> 512 </label><br>
+                        <div  id="FFTsizeSlider" class="BBProcessSlider" style="width: 80%; float: left;"></div>
+                        <input class="BBprocesstextfields" id="FFTsizeamount" value="4" style="width: 10%; float: right; opacity: 0.7;" type="text"><br>
+						
+						Average&nbsp;n:
+						<label id="AverageNLabel" class="" style="width: 100%"> 1 </label><br>
+                        <div  id="AverageNSlider" class="BBProcessSlider" style="width: 80%; float: left;"></div>
+                        <input class="BBprocesstextfields" id="AverageNamount" value="1" style="width: 10%; float: right; opacity: 0.7;" type="text"><br>
+                    </div>
+
+                </div>
+            </div>
+            <div  class="group">
+                <h3  class="accordion">Target Recognition</h3>
+                <div  id="targetrecpanel"  class="panel">
+                    <!-- <div  style="float: left;"> -->
+					   <div class="TargetRecog">
+					    CFAR: 
+						<label id="CFARLabel" for="CFARSlider" class="" style="width: 100%" > "CA-CFAR" </label><br>
+                        <div  id="CFARSlider" class="TargetRecogSlider" style="width: 80%; float: left;"></div>
+						<input  id="CFARamount" class="TargetRecogTextfield" value="0" style="width: 10%; float: right; opacity: 0.7;" type="text"><br>
+                        
+                        CFAR&nbsp;guard: 
+						<label id="CFGuardLabel" for="CFGuardSlider" class="" style="width: 100%"> 1 </label><br>
+                        <div  id="CFGuardSlider" class="TargetRecogSlider" style="width: 80%; float: left;"></div>
+						<input  id="CFGuardamount" class="TargetRecogTextfield" value="1" style="width: 10%; float: right; opacity: 0.7;" type="text"><br>
+
+                        CFAR&nbsp;size: 
+						<label id="CFSizeLabel" for="CFSizeSlider" class="" style="width: 100%"> 10 </label><br>
+                        <div  id="CFSizeSlider"  class="TargetRecogSlider" style="width: 80%; float: left;"></div>
+						<input  id="CFSizeamount" class="TargetRecogTextfield" value="10" style="width: 10%; float: right; opacity: 0.7;" type="text"><br>
+
+                        CFAR&nbsp;treshold: 
+						<label id="CFTresholdLabel" for="CFTresholdSlider" class="" style="width: 100%"> 16 </label><br>
+                        <div id="CFTresholdSlider" class="TargetRecogSlider" style="width: 80%; float: left;"></div>
+						<input  id="CFTresholdamount" class="TargetRecogTextfield" value="8" style="width: 10%; float: right; opacity: 0.7;" type="text"><br>
+                        </div>
+                    <!-- </div> -->
+                </div>
+            </div>
+
+
+            <div  class="group">
+                <h3  class="accordion">Scene Controls</h3>
+                <div  id="SceneControlpanel"  class="panel">
+
+                        <div>
+                            <input  id="rotateSceneX"  style="width: 10%" type="checkbox" class=""><label for="" class="">Rotate scene</label>
+                        </div>
+
+						<div>
+							Line count: <br>
+							<div id="LineCountSlider" style="width: 80%; float: left"></div><label id="LineCountLabel" style="width: 15%; float: right" for="LineCountSlider" class="">10</label>
+						</div>
+
+						<div>
+							X-axis divider <br>
+							<div id="XDividerSlider" style="width: 80%; float: left"></div><label id="XDividerLabel" style="width: 15%; float: right" for="XDividerSlider" class="">10</label>
+						</div>
+                </div>
+            </div>
+            <div  class="group">
+                <h3  class="accordion">System Info</h3>
+                <div  class="panel"> 
+                    <button id="SysInfoButt" class="infobarbutt"> Update system info </button>
+					<div style="">
+                        <label>UID: </label><br>
+						<label id="UIDLabel"></label>
+                    </div>
+					<div style="">
+						<label>Firmware: </label>
+                        <label id="VersionLabel"></label>
+						<label id="FirmwareLabel"></label><br>
+						<label id="VersionDateLabel"></label><br>
+						<label id="VersionCheckInLabel"></label>
+					</div>
+					<div style="">
+						<label>Protocol: </label>
+                        <label id="ProtocolSpecLabel"></label>
+						<label id="ProtocolLabel"></label><br>
+						<label id="ProtocolDateLabel"></label>						
+					</div>
+                </div>
+            </div>
+			
+			<div  class="group">
+                <h3  class="accordion">Detailed Errors</h3>
+				<div  class="panel"> 
+					<style type="text/css">
+						.err-color{width: 15px;}
+					</style>
+					<div  class="panel"> 
+						<button id="DetailedErrButt" class="infobarbutt"> refresh error info </button>
+					</div>
+					<table>
+					<tr>
+						<td colspan="2">Radar Front End:</td>
+					</tr>
+					<tr>
+						<td id="error1" class="err-color"></td>
+						<td>Base frequency too low</td>
+					</tr>
+					<tr>
+						<td id="error2" class="err-color"></td>
+						<td>Base frequency too high</td>
+					</tr>
+					<tr>
+						<td id="error3" class="err-color"></td>
+						<td>Bandwith exceeds min frequency</td>
+					</tr>
+					<tr>
+						<td id="error4" class="err-color" border-spacing="5px"></td>
+						<td>Bandwith exceeds max frequency</td>
+					</tr>
+					<tr>
+						<td id="error5" class="err-color"></td>
+						<td>VCO error</td>
+					</tr>
+					<tr>
+						<td id="error6" class="err-color"></td>
+						<td>Front end out of specification</td>
+					</tr>
+					<tr>
+						<td colspan="2">Baseband:</td>
+					</tr>
+					<tr>
+						<td id="error9" class="err-color"></td>
+						<td>Minimum RF frequency not found</td>
+					</tr>
+					<tr>
+						<td id="error10" class="err-color"></td>
+						<td>Maximum RF frequency not found</td>
+					</tr>
+					<tr>
+						<td id="error11" class="err-color"></td>
+						<td>Lock loss</td>
+					</tr>
+					<tr>
+						<td id="error13" class="err-color"></td>
+						<td>Amplifier saturated</td>
+					</tr>
+					<tr>
+						<td colspan="2">Processing:</td>
+					</tr>
+					<tr>
+						<td id="error17" class="err-color"></td>
+						<td>Too many samples</td>
+					</tr>
+					<tr>
+						<td id="error18" class="err-color"></td>
+						<td>DC error</td>
+					</tr>
+					</table>
+				</div>
+            </div>
+			
+            <div  class="group">
+                <h3  class="accordion">Log</h3>
+                <div  class="panel"> 
+                    <textarea id="logtext" style="width: 100%; height: 250px; overflow-y: scroll; resize: none;"></textarea>
+                </div>                
+            </div>
+        WebGUI config words:
+        <textarea id="actConfig" style="width: 90%; height: 75px; overflow-y: scroll; resize: none;"></textarea>
+            </div>
+        </div>
+        
+        
+        <div  class="randleft"  onclick="togglemenu();">
+            <p>&lt;</p>
+            <p>&lt;</p>
+            <p>&lt;</p>
+            <p>&lt;</p>
+            <p>&lt;</p>
+            <p>&lt;</p>
+            <p>&lt;</p>
+            <p>&lt;</p>
+            <p>&lt;</p>
+        </div>
+
+<!--        add the menu at the top of the Page -->
+        <ul id="menulist">
+            <li><a href="#" id="fftshow" class="active" onclick="showFFT();"  onmouseover="showFFTDropdown();" >FFT-View </a>
+            </li>
+            <li><a href="#" id="TargetTimeLineShow" class="inactive" onclick="showTargetTimeLine();">Target-Timeline</a></li>
+<!--            <li><a href="#" id="phaseshow" class="inactive" onclick="showphasediagramm();">Phase Diagramm</a></li>-->
+            <li><a href="#" id="spectroshow" class="inactive" onclick="showspectrogramm();">Spectrogram</a></li>
+            <li><a href="#" id="options" class="inactive" onclick="showOptionsDropdown();" onmouseover="showOptionsDropdown();">Options</a></li>
+        </ul>
+<!--        add the space to draw 3D-Animations to the Page-->
+        <div  id="canvascontainer"  class="drawpanel">
+            <div id="FFTDropdown"  class="untermenu"  onmouseleave="hidedropdown();" style="left: 0px">
+                <fieldset>
+                    <div style ="width:100%;">
+                        <input id="2Dradio" type="radio" name="View" value="" style="width:10%; float: left;" onclick="showFFT();" checked=""/><label for="2Dradio" style="width: 80%; float: right;">FFT (2D)</label>
+                    </div>
+                    <div style ="width:100%; margin-top: 10%;">
+                        <input id="3Dradio" type="radio" name="View" value="" style="width:10%; float: left;" onclick="showWave();"/><label for="3Dradio" style="width: 80%; float: right;">Waterfall (3D)</label>
+                    </div>
+
+                </fieldset>
+                
+            </div>
+
+            <div id="OptionsDropdown"  class="untermenu"  onmouseleave="hidedropdown()" style="right: 1%">
+                <div> Colors</div>
+                <fieldset>
+                    <div style="width:100%;">
+                        <input id="DBcolorRadio" type="radio" name="spectrocolor" value="" style="width:10%; float: left" checked/><label for="DBcolorRadio" style="width: 80%; float: right;"> Magnitude</label>
+                    </div>
+                    <div>
+                        <input id="RangeRadio" type="radio" name="spectrocolor" value="" style="width:10%; float: left"/><label for="RangecolorRadio" style="width: 80%; float: right;">Range / target # </label>
+                    </div>
+                    <div>
+                        <input id="PhaseRadio" type="radio" name="spectrocolor" value="" style="width:10%; float: left"/><label for="PhasecolorRadio" style="width: 80%; float: right;">Phase angles</label>
+                    </div>
+                    <div>
+                        <input id="NoColorRadio" type="radio" name="spectrocolor" value="" style="width:10%; float: left"/><label for="PhasecolorRadio" style="width: 80%; float: right;">No color</label>
+                    </div>
+                    
+                    
+                </fieldset>
+                <div  style="width:100%; margin: 12px">
+                    <input id="targetview" type="checkbox" style="width:10%" onclick="showtargetlistArrows(this);"><label for="targetview" style="width: 70%; float: right;">Phase markers</label>
+                </div>
+            </div>
+
+
+        </div>
+<!--        add the the space for drawing SVG to the Page-->
+        <div  class="drawpanel"  id="svgcontainer">
+            <svg  id="svgflaeche">
+            <defs>
+            <radialGradient  id="grad1"  cx="50%"  cy="50%"  r="50%"  fx="50%"  fy="50%">
+            <stop  offset="0%"  style="stop-color: #104E8B; stop-opacity: 0"></stop>
+            <stop  offset="100%"  style="stop-color:rgb(255,255,255);stop-opacity:1"></stop>
+            </radialGradient> </defs> </svg> </div>
+
+<!--        add the Targetlist to the Page   -->
+<div id="targetlistContainer">
+    <div id="statusfeld">
+
+                <label id="StatusLabel" style="text-align: center; width: 100%; float: right; background-color: black; color: white;">Status</label> <br>
+
+                <div id="statuscontainer">
+                    <div id="statusleftCol" style="width: 50%; float: left;">
+                        distance in: <label id="EinheitsLabel">mm</label><br>
+                        accuracy:   <label id="accuracyLabel">50</label> mm<br>
+                        update: <label id="tslm"></label> Hz<br>
+                    </div>
+                    <div id="statusrightCol" style="width: 50%; float: right;">
+                        max range: <label id="StatusMaxRange">1920</label><br>
+                        gain: <label id="StatusGain"></label> dB<br>
+                        BW: <label id="bandwith"></label> MHz<br>
+                    </div>
+                </div>
+
+            </div>
+        <table  id="targetlisttable">
+            <caption id="targetlistcaption" style="background-color: black;">
+                <a href="#" style="text-decoration: none; color: white;"> Target list </a>
+
+            </caption>
+            <thead >
+
+                <tr>
+                    <td>#</td>
+                    <td>dist</td>
+                    <td>dB</td>
+                    <td>phi</td>
+                    <td>speed</td>
+                </tr>
+            </thead>
+            <tbody  id="targetlistbody">
+                <tr  id="targetrow0">
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                </tr>
+                <tr  id="targetrow1">
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                </tr>
+                <tr  id="targetrow2">
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                </tr>
+                <tr  id="targetrow3">
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                </tr>
+                <tr  id="targetrow4">
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                </tr>
+                <tr  id="targetrow5">
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                </tr>
+                <tr  id="targetrow6">
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                </tr>
+                <tr  id="targetrow7">
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                </tr>
+                <tr  id="targetrow8">
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                </tr>
+                <tr  id="targetrow9">
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                </tr>
+                <tr  id="targetrow10">
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                </tr>
+                <tr  id="targetrow11">
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                </tr>
+                <tr  id="targetrow12">
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                </tr>
+                <tr  id="targetrow13">
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                </tr>
+                <tr  id="targetrow14">
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                </tr>
+                <tr  id="targetrow15">
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                </tr>
+            </tbody>
+            <tfoot >
+
+<!--                <tr style="background-color: whitesmoke; color: #000">
+                    <td>dist</td><td>in:</td><td><label id="EinheitsLabel"></label></td><td></td><td></td>
+                </tr>-->
+            </tfoot>
+        </table>
+
+
+</div>
+
+    </body>
+</html>

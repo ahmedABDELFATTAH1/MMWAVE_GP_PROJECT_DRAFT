@@ -1,0 +1,107 @@
+<html>
+  <head>
+    <meta  content="text/html; charset=UTF-8"  http-equiv="content-type">
+    <title>Titel</title>
+    <meta  name="viewport"  content="width=device-width, user-scalable=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0">
+    <link  rel="stylesheet"  href="style.css"  type="text/css">
+    <script  src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"> </script>
+    <script  src="doc.js"></script>
+  </head>
+  <body>
+    <h1  id="ueberschrift"  style="text-align: center;">Silicon Radar WebGUI - Documentation</h1>
+      
+		<p  style="width: 70%"> The Silicon Radar WebGUI is an Html- and
+      JavaScript-based Interface to visualize data coming from the Silicon Radar
+      Eval Board or the Silicon Radar SimpleRad using an ASCII-based Protocol. 
+      The WebGUI uses a <a  href="https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_client_applications">Websocket-</a>
+      Connection to communicate with the Server and was developed and tested on
+      Chrome and Firefox.</p>
+    <b>
+      <p  style="width: 70%">The following Opensource-JavaScript-Frameworks have
+        been used to develop the WebGUI:</p>
+      <table  style="width: 90%;"  border="0">
+        <tbody>
+          <tr>
+            <td>jquery.js</td>
+            <td><a  href="https://jquery.com/">https://jquery.com/</a><br>
+            </td>
+            <td><br>
+            </td>
+            <td><br>
+            </td>
+          </tr>
+          <tr>
+            <td>three.js</td>
+            <td> <a  href="http://threejs.org">http://three.js</a></td>
+            <td>A Javascript-Framework for creating WebGL content<br>
+            </td>
+            <td>used for the 3D- Visualization</td>
+          </tr>
+          <tr>
+            <td> dat.gui</td>
+            <td><a  href="https://github.com/dataarts/dat.gui">https://github.com/dataarts/dat.gui</a></td>
+            <td>A lightweight graphical user interface for changing variables in
+              JavaScript. </td>
+            <td>used for Cameracontrols</td>
+          </tr>
+          <tr>
+            <td>d3.js</td>
+            <td><a  href="https://d3js.org/">https://d3js.org/</a></td>
+            <td>JavaScript library for manipulating documents based on data. </td>
+            <td>used for the Phase-Diagramm</td>
+          </tr>
+        </tbody>
+      </table>
+      <br>
+      <br>
+      The Web-GUI consists of the Files: index.html, style.css and the following
+      JavaScript-Files: <br>
+      <br>
+      <table  style="width: 100%;"  border="0">
+        <tbody>
+            
+          <tr>
+            <td><a  href="#"  onclick="showglobalsDoc()"  ;="">globals.js</a></td>
+            <td>contains all global variables</td>
+          </tr>
+          <tr>
+            <td><a  href="#"  onclick="showscreen1sDoc();">screen1.js</a></td>
+            <td>script for initializing the three.js scene and for adding
+              objects the scene</td>
+          </tr>
+          <tr>
+            <td><a  href="#"  onclick="showconnectionDoc();">connection.js</a></td>
+            <td>script for communication with the server, opens a websocket
+              connection</td>
+          </tr>
+          <tr>
+            <td><a  href="#"  onclick="showcontrolssDoc();">controls.js</a></td>
+            <td>contains the functions to control the GUI</td>
+          </tr>
+          <tr>
+            <td><a  href="#"  onclick="showcameracontrolsDoc();">cameracontrols.js</a></td>
+            <td>contains the functions to control the camera</td>
+          </tr>
+          <!-- <tr>
+              <td><a  href="#"  onclick="showloggingDoc();">logging.js</a></td>
+              <td>contains the funtions for the Log</td>
+          </tr> 
+          <tr>
+            <td><a  href=""  onclick="//showindexDoc()"  ;="">index.html</a></td>
+            <td>the html-site to be displayed, where all content is inside</td>
+          </tr>
+          <tr>
+            <td><a  href=""  onclick="//showStyleCSSDoc()"  ;="">style.css</a></td>
+            <td>the css-file for styling the html-elements in the index.html</td>
+          </tr>
+         	 -->
+        </tbody>
+      </table>
+      
+      <br>
+      <br>
+    </b>      
+      
+      <iframe  id="contentframe"  src="globalsJSdoc/globals.js.html" style="margin-top: 12px; width: 90%"></iframe> <br>
+  </body>
+</html>
