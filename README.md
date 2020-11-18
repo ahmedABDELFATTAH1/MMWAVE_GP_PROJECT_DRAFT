@@ -4,7 +4,7 @@
 
 ## MMWAVE Radar sensing for face identification task
 
-![radar devise photo](assests/radraimage.jpg)
+![radar device photo](assests/radraimage.jpg =100x20)  
 
 ## This project is under the supervision of ..
 - Prof : Amr Wassal 
