@@ -26,29 +26,29 @@ AccelStepper V_motor(AccelStepper::DRIVER, STEPPER2_STEP_PIN, STEPPER2_DIR_PIN);
 const float step2angle = 0.45;
 
 //range for horizontal
-const int max_H_angle = 22.5;
+const float max_H_angle = 22.5;
 
 //range for vertical
-const int max_V_angle = 45;
+const float max_V_angle = 45;
 
 //vertical speed
-const int V_speed = 300;
-const int Max_v_speed = V_speed + 50;
+const float V_speed = 300;
+const float Max_v_speed = V_speed + 50;
 
 //horizontal speed 
-const int H_speed = 1000;
-const int Max_h_speed = H_speed + 50;
+const float H_speed = 1000;
+const float Max_h_speed = H_speed + 50;
 
 
 // max H angle / step2angle = 180/0.45=400 steps
-const int max_H_steps = max_H_angle / step2angle;
+const float max_H_steps = max_H_angle / step2angle;
 
 // max H angle / step2angle = 90/0.45=200 steps
-const int max_V_steps = max_V_angle / step2angle;
+const float max_V_steps = max_V_angle / step2angle;
 
 
-int V_direction = 1;
-int H_direction = 1;
+float V_direction = 1;
+float H_direction = 1;
 
 void setup()
 {
@@ -107,10 +107,10 @@ read the data in tsv mode
 void home_H() {
   
     //H_motor.setCurrentPosition(0);
-    int scaler = 2 * H_direction;   //to increase the step size
-    int final_point = max_H_steps * H_direction/2 + scaler ;
+    float scaler = 2 * H_direction;   //to increase the step size
+    float final_pofloat = max_H_steps * H_direction/2 ;
     long current_position = H_motor.currentPosition();
-    while (current_position != final_point) { // run until it reaches the distance value
+    while (current_position != final_pofloat) { // run until it reaches the distance value
      home_V();
      //H_motor.setSpeed(H_direction * H_speed);
      H_motor.moveTo(current_position+scaler);
@@ -124,9 +124,9 @@ void home_H() {
 
 void home_V() {
 //  V_motor.setCurrentPosition(0);
-//  int final_point = + * V_direction;
+//  float final_pofloat = + * V_direction;
   long current_position = V_motor.currentPosition();
-//  while (current_position != final_point  ) { // run until it reaches the distance value
+//  while (current_position != final_pofloat  ) { // run until it reaches the distance value
 //    V_motor.setSpeed(V_direction * V_speed);
 //    V_motor.runSpeed();
 //    
