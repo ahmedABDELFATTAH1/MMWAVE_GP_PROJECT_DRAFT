@@ -1,6 +1,5 @@
 import serial
 import time
-from threading import Timer
 
 
 class Radar():
