@@ -1,5 +1,6 @@
 import serial
 import time
+from threading import Timer
 
 
 class Radar():
@@ -43,6 +44,8 @@ class Radar():
     def store_readings(self, file_name):
         line = self.ser.readline()  # read a line from the sensor
         new_line = line.decode("utf-8")
+        print(len(new_line))
+        print(new_line[0:100])
         f = open(file_name, "a")
         f.write(new_line)
         f.close()
@@ -81,4 +84,4 @@ if __name__ == "__main__":
     radar.start()
     radar.clear_buffer()
     while 1:
-        radar.store_readings('negatives.txt')
+        radar.store_readings('positives.txt')
