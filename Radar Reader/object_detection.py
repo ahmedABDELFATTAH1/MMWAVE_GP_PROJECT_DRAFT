@@ -79,8 +79,11 @@ class Object_detection():
     @staticmethod
     def modele_naive(X_data_train,Y_data_train,X_data_val,Y_data__val):
         '''
-        :param shape_input:
-        :return: a trained model
+        :param X_data_train:
+        :param Y_data_train:
+        :param X_data_val:
+        :param Y_data__val:
+        :return: the trained model
         '''
         if os.path.isfile('model_naive.h5'):
             model = models.load_model('model_naive.h5')
@@ -131,11 +134,10 @@ def lock_computer():
 last_reading = True
 t=Timer(10.0,lock_computer)
 if __name__=='__main__':
-    positives = Object_detection.import_data(file_name='positives.txt') #read the object on readings
-    negatives = Object_detection.import_data(file_name='negatives.txt') #read the object off redings
-
-    X_data_train,Y_data_train,X_data_val,Y_data__val = Object_detection.format_data(positives,negatives,.7) #preprocessing on data
-    Object_detection.modele_naive() # build and train the model or just return it if already trained
+    #positives = Object_detection.import_data(file_name='positives.txt') #read the object on readings
+    #negatives = Object_detection.import_data(file_name='negatives.txt') #read the object off redings
+    #X_data_train,Y_data_train,X_data_val,Y_data__val = Object_detection.format_data(positives,negatives,.7) #preprocessing on data
+    Object_detection.modele_naive(None,None,None,None) # build and train the model or just return it if already trained
     print(Object_detection.my_model.summary()) #print the summary of the model
     while 1:
         prediction = Object_detection.test_live()

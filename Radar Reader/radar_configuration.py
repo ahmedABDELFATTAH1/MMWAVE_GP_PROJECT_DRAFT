@@ -84,4 +84,4 @@ if __name__ == "__main__":
     radar.start()
     radar.clear_buffer()
     while 1:
-        radar.store_readings('positives.txt')
+        radar.store_readings('negatives.txt')
