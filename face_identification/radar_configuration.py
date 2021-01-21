@@ -68,11 +68,7 @@ class Radar():
             return None
         else:
             counter = splittedLine[1]
-
-
-            size = splittedLine[2]
-            # print('counter value = '+str(counter))
-            # print('size value = '+str(size))
+            size = splittedLine[2]         
             frame = [int(i) for i in splittedLine[4:index]]  # get the frame
             return frame
         return None

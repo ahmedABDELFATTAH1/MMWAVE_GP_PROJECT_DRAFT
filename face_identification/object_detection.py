@@ -10,14 +10,12 @@ from threading import Timer,Thread
 import time
 import numpy as np
 import time
+import json
 
 
-#global variables
-last_reading =None
 
 #this function will be opened in a thread for fast reading readings from sensor
-def get_readings():
-    global last_reading
+def get_readings(com_num):   
     '''
     this function will be an opned thread to take readings from the radar
     it will get frames from the radar then produce it in the queue
@@ -27,16 +25,18 @@ def get_readings():
         radar.close()
     radar.start()	
     radar.clear_buffer()
-    while 1:
-        #print("1111111111")        
+    while 1:             
         reading = radar.read_magnitude()   
         if reading is not None:
-            last_reading = reading
-        return 
-        #print(last_reading)
+            yield reading
+        else:
+            yield None
+           
+       
+      
 
 
-class face_detection():
+class Face_Detection():
     def __init__(self):
         self.model = None
 
@@ -45,8 +45,7 @@ class face_detection():
         return result
 
 
-    def test_live(self):
-        global last_reading
+    def test_live(self,reading):       
         '''
         this function read a reading from the sensor and make a prediction
 
@@ -56,20 +55,20 @@ class face_detection():
         [[1,2,3,4,5],[2,3,4,5,]]
 
         '''              
-        while last_reading is None:
-            #print(last_reading)       
+        while reading is None:
+            #print(reading)       
             return
 
-        var_last_reading = last_reading
-        y= self.model.predict(np.reshape(var_last_reading,(1,len(var_last_reading))))>.8        
+        var_reading = reading
+        y= self.model.predict(np.reshape(var_reading,(1,len(var_reading))))>.8        
         if y is None:            
             return None
         face_exists =  y[0][0]
-        print(face_exists)        
+        print(face_exists)
 
         if(face_exists):            
-            distance, _ = self.range_face_detection(var_last_reading)   
-            print(distance)         
+            distance, _ = self.range_face_detection(var_reading)
+            print(distance)
             return distance
         print('noooo face')
         return None
@@ -127,26 +126,26 @@ class face_detection():
         return data[0:train_len,0:-1],data[0:train_len,-1],data[train_len:,0:-1],data[train_len:,-1]
 
 
-    def range_face_detection(self,frame,bin_resolution=.9):  
+    def range_face_detection(self,frame,bin_resolution=8):  
         '''
-        a simple function to test object within range
+        a simple function to test object within range 
         '''
-        range_start=200
-        range_end=459.9
+        print("1111111111111111111111")
+        print(len(frame))
+        range_start = 300
+        range_end= 2071
         bin_start=int(range_start/bin_resolution)
         bin_end=int(range_end/bin_resolution)
-        if(bin_start<0 or bin_end>len(frame)-1):
-            return None,None
-        face_frame=frame[bin_start:bin_end]
+        face_frame=frame[bin_start:min(bin_end,len(frame))-1]
         max_index=np.argmax(face_frame)
-        peak_distance=200+bin_resolution*max_index
+        peak_distance=range_start + bin_resolution*max_index
         print("there is a peak at distance "+str(peak_distance))
         print("with magnitude =  "+str(max(face_frame)))
         return peak_distance,max(face_frame)
 
-    def import_data(self,file_name):
+    def import_data(self,file_path):
         all_frames=[]
-        with open(file_name, 'r') as f:
+        with open(file_path, 'r') as f:
             allframes = f.readlines()
             count =0
             for line in allframes:
@@ -175,20 +174,22 @@ class face_detection():
         return all_frames
 
 
-number_of_samples = 511
-range_resolution = .9
-com_num = "com4"
 if __name__=='__main__':
-    df = face_detection()
-    positives = df.import_data(file_name='positives.txt') #read the object on readings
-    negatives = df.import_data(file_name='negatives.txt') #read the object off redings    
+    configuration_file = open('configuration.json',)
+    configuration_json = json.load(configuration_file)     
+    sensor_port = configuration_json["SENSOR_PORT"]
+    df = Face_Detection()
+    positives = df.import_data(file_path='data_set\\person_in_range\\positives.txt') #read the object on readings
+    negatives = df.import_data(file_path='data_set\\person_in_range\\negatives.txt') #read the object off redings    
     X_data_train,Y_data_train,X_data_val,Y_data__val =df.format_data(positives,negatives,.7) #preprocessing on data
     df.modele_naive(X_data_train,Y_data_train,X_data_val,Y_data__val) # build and train the model or just return it if already trained
-    print(df.model.summary()) #print the summary of the model   
-    while 1:
-        get_readings()   
-        distance = df.test_live()
-        print(distance)
+    print(df.model.summary()) 
+    for reading in get_readings(sensor_port):        
+        if reading is None:
+            continue
+        distance,max_magnitude = df.range_face_detection(reading,8)
+        print("the max distance is "+str(distance))
+        print("the max magnitude is "+str(max_magnitude))
        
 
 
