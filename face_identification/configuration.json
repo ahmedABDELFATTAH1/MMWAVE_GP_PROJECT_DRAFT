@@ -1,0 +1,9 @@
+{
+    "ARDUINO_PORT":"COM5",
+    "SENSOR_PORT":"COM3" ,
+    "SENSOR_FORMAT":"TSV" , 
+    "MAX_DISTANCE":8268.2 ,
+    "NUMBER_SAMPLES":255
+
+
+}
