@@ -21,16 +21,16 @@ def get_readings(com_num):
     it will get frames from the radar then produce it in the queue
     '''
     radar = Radar(port=com_num)
-    if(radar.is_open()):
-        radar.close()
-    radar.start()	
+    if(not radar.is_open()):
+        # radar.close()
+        radar.start()	
     radar.clear_buffer()
-    while 1:             
-        reading = radar.read_magnitude()   
-        if reading is not None:
-            yield reading
-        else:
-            yield None
+    # while 1: 
+    reading = radar.read_magnitude()   
+    if reading is not None:
+        return reading
+    
+
            
        
       
@@ -132,7 +132,7 @@ class Face_Detection():
         '''
         print("1111111111111111111111")
         print(len(frame))
-        range_start = 300
+        range_start = 400
         range_end= 2071
         bin_start=int(range_start/bin_resolution)
         bin_end=int(range_end/bin_resolution)

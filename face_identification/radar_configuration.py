@@ -69,18 +69,19 @@ class Radar():
         else:
             counter = splittedLine[1]
             size = splittedLine[2]         
-            frame = [int(i) for i in splittedLine[4:index]]  # get the frame
+            frame = [int(i) for i in splittedLine[3:index]]  # get the frame
             return frame
         return None
 
 
 if __name__ == "__main__":
-    radar = Radar(port='com4')
+    radar = Radar(port='com5')
     if radar.is_open():
         radar.close()
     radar.start()
     radar.clear_buffer()
     while 1:
-        radar.store_readings('negatives.txt')
+        print (radar.read_magnitude())
+    #     radar.store_readings('negatives.txt')
         
         
