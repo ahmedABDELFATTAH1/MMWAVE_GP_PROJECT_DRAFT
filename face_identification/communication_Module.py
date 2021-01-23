@@ -10,10 +10,10 @@ from threading import Thread
 
 stepAngle = 0.45
 
-maxAngleUpper = 45
+maxAngleUpper = 22.5
 maxStepsOfUpper = maxAngleUpper/stepAngle
 
-maxAngleLower = 90
+maxAngleLower = 22.5
 maxStepsOfLower = maxAngleLower/stepAngle
 
 scanningLowerStepSize = 5
@@ -202,7 +202,7 @@ if __name__ == "__main__":
 
     # moves the sensor in lower direction (XY plane) until the face is found
     
-    lowerDirection = calibrateLower()
+    # lowerDirection = calibrateLower()
     lowerDirection = 1
     dist = []
     uAngel =[]
