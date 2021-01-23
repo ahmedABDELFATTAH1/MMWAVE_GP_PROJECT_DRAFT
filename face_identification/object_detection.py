@@ -119,12 +119,7 @@ if __name__=='__main__':
     # X_data_train,Y_data_train,X_data_val,Y_data__val =df.format_data(positives,negatives,.7) #preprocessing on data
     # df.modele_naive(X_data_train,Y_data_train,X_data_val,Y_data__val) # build and train the model or just return it if already trained
     # print(df.model.summary()) 
-    radar = Radar()
-    while True:
-        reading = radar.get_reading()   
-        distance,magnitude = radar.range_face_detection(reading)
-        if magnitude > -40:
-
+    pass
 
 
 
