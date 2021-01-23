@@ -10,14 +10,14 @@ from threading import Thread
 
 stepAngle = 0.45
 
-maxAngleUpper = 22.5
-maxStepsOfUpper = maxAngleUpper/stepAngle
-
-maxAngleLower = 22.5
-maxStepsOfLower = maxAngleLower/stepAngle
-
 scanningLowerStepSize = 5
 scanningUpperStepSize = 5
+
+maxAngleUpper = 22.5
+maxStepsOfUpper = maxAngleUpper/(stepAngle*scanningUpperStepSize)
+
+maxAngleLower = 22.5
+maxStepsOfLower = maxAngleLower/(stepAngle*scanningLowerStepSize)
 
 calibrateLowerStepSize = 10
 calibrateLowerTotalStepsCount = 20
@@ -46,6 +46,7 @@ def get_readings_thread():
     global global_distance
     while(True):
         global_distance = radar.get_median_distance(1)
+        print("global distance = ",global_distance)
 
 
 def set_up():
@@ -110,6 +111,7 @@ def moveMotor(motor: Motors, stepSize, direction: Direction):
 
 
 def scanFace(lowerDirection):
+    global global_distance
     upperDirection = False
     
     moveU = True
@@ -130,9 +132,11 @@ def scanFace(lowerDirection):
                 moveMotor(Motors.UPPER.value, scanningUpperStepSize,
                           Direction.NEGATIVE.value)
                 uCounter -= 1
-
+            
             distance = global_distance
-        
+            print("######################################")
+            print(distance)
+            print("######################################")
             if (distance != -1):
                 dResult.append(distance)
                 uResult.append(uCounter * 0.45)
@@ -144,7 +148,7 @@ def scanFace(lowerDirection):
             # else:
             #     moveU = False
             print(uCounter)
-            if uCounter == 50 or uCounter == -50:
+            if abs(uCounter) == maxStepsOfUpper:
                 moveU = False
         moveU = True
         uCounter = 0
@@ -165,7 +169,7 @@ def scanFace(lowerDirection):
             dResult.append(distance)
             uResult.append(uCounter * 0.45)
             lResult.append(lCounter * 0.45)
-        if lCounter == 50:
+        if abs(lCounter) == maxStepsOfLower:
             moveL = False
         # if distance >= min_distance and distance <= max_distance:
         #     detect = True
@@ -192,13 +196,14 @@ def move_with_keyboard ():
         elif (val == "s"):
             moveMotor(Motors.UPPER.value, scanningUpperStepSize, Direction.POSITIVE.value)
 if __name__ == "__main__":
-    arduino = set_up()
     
+
+    arduino = set_up()
     # setting upp arduino ports
     t1 = Thread(target=get_readings_thread,daemon=False)
     t1.start()
-    # move_with_keyboard ()
-    arduino = set_up()
+    #move_with_keyboard ()
+    t1.join()
 
     # moves the sensor in lower direction (XY plane) until the face is found
     
@@ -213,21 +218,23 @@ if __name__ == "__main__":
     else:
         dist,uAngel,lAngel = scanFace(lowerDirection)
     
-    x , y , z = np.array(dist)*np.cos(uAngel)*np.sin(lAngel) , np.array(dist)*np.cos(uAngel)*np.cos(lAngel) , np.array(dist)*np.sin(uAngel)
-    print(x)
+        x , y , z = np.array(dist)*np.cos(uAngel)*np.sin(lAngel) , np.array(dist)*np.cos(uAngel)*np.cos(lAngel) , np.array(dist)*np.sin(uAngel)
+        print(x)
+        print(y)
+        print(z)
 
-    my_sample_x = np.array(x)
-    my_sample_y = np.array(y)
-    my_sample_z = np.array(z)
-    # print (my_sample_x)
-    cat_g = ['setosa']
-    sample_cat = [cat_g[np.random.randint(0,1)] for i in range (len(my_sample_z))]
+        my_sample_x = np.array(x)
+        my_sample_y = np.array(y)
+        my_sample_z = np.array(z)
+        
+        cat_g = ['setosa']
+        sample_cat = [cat_g[np.random.randint(0,1)] for i in range (len(my_sample_z))]
 
-    df = pd.DataFrame(my_sample_x,columns=['sepal_length'])
-    df['sepal_width'] = my_sample_y
-    df['petal_width'] = my_sample_z
-    df['species'] = sample_cat
-    df.head()
-    fig = px.scatter_3d(df, x='sepal_length', y='sepal_width', z='petal_width',
-              color='species')
-    fig.show()
+        df = pd.DataFrame(my_sample_x,columns=['sepal_length'])
+        df['sepal_width'] = my_sample_y
+        df['petal_width'] = my_sample_z
+        df['species'] = sample_cat
+        df.head()
+        fig = px.scatter_3d(df, x='sepal_length', y='sepal_width', z='petal_width',
+                color='species')
+        fig.show()
