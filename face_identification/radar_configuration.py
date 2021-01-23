@@ -1,17 +1,25 @@
 import serial
 import time
-
+import numpy as np
+import json
 
 class Radar():
     '''
     this is the radar configuration class this will implement all low level communication with the radar sensor
     '''
 
-    def __init__(self, port='com4', baudrate=1000000):
+    def __init__(self):
+        configuration_file = open('configuration.json',)
+        self.configuration_json = json.load(configuration_file)
+        self.sensor_port = self.configuration_json["SENSOR_PORT"]
+        self.max_distance = self.configuration_json["RANGE_OF_INTEREST"]["MAX_DISTANCE"]
+        self.min_distance = self.configuration_json["RANGE_OF_INTEREST"]["MIN_DISTANCE"]
+        self.baudrate = self.configuration_json["BAUD_RATE"]
+        self.bin_resolution = self.configuration_json["BIN_RESOLUTION"] 
         '''
         define a connection through the serial port
         '''
-        self.ser = serial.Serial(port=port, baudrate=baudrate)
+        self.ser = serial.Serial(port=self.sensor_port, baudrate=self.baudrate)
 
     def is_open(self):
         '''
@@ -41,13 +49,75 @@ class Radar():
         self.ser.read_all()
 
     def store_readings(self, file_name):
-        line = self.ser.readline()  # read a line from the sensor
-        new_line = line.decode("utf-8")
-        print(len(new_line))
-        print(new_line[0:100])
-        f = open(file_name, "a")
-        f.write(new_line)
-        f.close()
+        num = self.configuration_json["NUMBER_OF_TRAIN_SET"]
+        file = open(file_name,'a')
+        for _ in range(num):
+            reading = self.get_reading()
+            file.write(reading)
+    
+    def retrive_samples(self,file_name):
+        readings = [] 
+        file = open(file_name,'r')        
+        reading = self.get_reading()
+        file.readline()
+        readings.append(reading)
+        return readings
+    
+
+
+    def setup_radar(self):
+        if(self.is_open()):
+            self.close()
+            self.start()	
+        self.clear_buffer()
+
+
+    def get_median_distance(self,num):
+        threashold = self.configuration_json["THRESHOLD"]
+        readings = []
+        count = 0 
+        while(count!=num):
+            reading = self.get_reading()
+            readings.append(reading)
+            count +=1
+        distances = []
+        for reading in readings:
+            distance,magnitude = self.range_face_detection(radar)
+            if magnitude > threashold:
+                distances.append(distance)
+        if(len(distances)==0):
+            return -1
+        return np.median(distances)
+
+    
+    def range_face_detection(self,frame):  
+        '''
+        a simple function to test object within range 
+        '''        
+        print(len(frame))
+        range_start = self.min_distance
+        range_end= self.max_distance
+        bin_resolution = self.bin_resolution
+        bin_start=int(range_start/bin_resolution)
+        bin_end=int(range_end/bin_resolution)
+        face_frame=frame[bin_start:min(bin_end,len(frame))-1]
+        max_index=np.argmax(face_frame)
+        peak_distance=range_start + bin_resolution*max_index
+        print("there is a peak at distance "+str(peak_distance))
+        print("with magnitude =  "+str(max(face_frame)))
+        return peak_distance,max(face_frame)
+
+
+    def get_reading(self):   
+        '''
+        this function will be an opned thread to take readings from the radar
+        it will get frames from the radar then produce it in the queue
+        '''
+        reading = self.read_magnitude()   
+        if reading is not None:
+            return reading
+        else :
+            return self.get_reading()
 
 
     def read_magnitude(self):
@@ -66,22 +136,16 @@ class Radar():
             print(e)
         if (index == -1):
             return None
-        else:
-            counter = splittedLine[1]
-            size = splittedLine[2]         
+        else:             
             frame = [int(i) for i in splittedLine[3:index]]  # get the frame
             return frame
         return None
 
 
 if __name__ == "__main__":
-    radar = Radar(port='com5')
-    if radar.is_open():
-        radar.close()
-    radar.start()
-    radar.clear_buffer()
+    radar = Radar()    
     while 1:
-        print (radar.read_magnitude())
-    #     radar.store_readings('negatives.txt')
+        print(radar.read_magnitude())
+    #radar.store_readings('negatives.txt')
         
         

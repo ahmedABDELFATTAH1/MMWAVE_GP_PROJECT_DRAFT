@@ -4,8 +4,9 @@ import pandas as pd
 import serial
 import time
 from enum import Enum
-from object_detection import *
-
+import json
+from radar_configuration import Radar
+from threading import Thread
 
 stepAngle = 0.45
 
@@ -22,11 +23,9 @@ calibrateLowerStepSize = 10
 calibrateLowerTotalStepsCount = 20
 
 
+
 configuration_file = open('configuration.json',)
 configuration_json = json.load(configuration_file)
-sensor_port = configuration_json["SENSOR_PORT"]
-max_distance = configuration_json["MAX_DISTANCE"]
-min_distance = configuration_json["MIN_DISTANCE"]
 arduino_port = configuration_json["ARDUINO_PORT"]
 
 
@@ -40,21 +39,14 @@ class Direction(Enum):
     NEGATIVE = -1
 
 
-global_reading = None
-df = Face_Detection()
 
+radar = Radar()
+global_distance = -1
 def get_readings_thread():
-    global global_reading
+    global global_distance
     while(True):
-        reading = get_readings(sensor_port)
-        if reading is not None:
-            global_reading = reading
-            df.range_face_detection(reading,bin_resolution=0.9)
-            # print("##########################")
-            # print(len(reading))
-            # print("##########################")
-        # else:
-        #     print("IAM  NONE PLZ STOP")
+        global_distance = radar.get_median_distance(1)
+
 
 def set_up():
     arduino = serial.Serial()
@@ -72,8 +64,7 @@ else return none
 """
 
 
-def calibrateLower():
-    df = Face_Detection()
+def calibrateLower():    
     detect = False
     count = 0
     # looping until face is found or rotated 90 degrees to the right
@@ -81,10 +72,10 @@ def calibrateLower():
         moveMotor(Motors.LOWER.value, calibrateLowerStepSize,
                   Direction.POSITIVE.value)
         count += 1
-        distance, max_magnitude = df.range_face_detection(global_reading, 8)
-        if distance >= min_distance and distance <= max_distance:
+        result = radar.get_median_distance(1) 
+        if result != -1:
             detect = True
-            print(distance)
+                 
         if(detect):
             return Direction.POSITIVE.value  # return that a face is found when rotating right
     moveMotor(Motors.LOWER.value, calibrateLowerStepSize *
@@ -95,12 +86,9 @@ def calibrateLower():
         moveMotor(Motors.LOWER.value, calibrateLowerStepSize,
                   Direction.NEGATIVE.value)
         count -= 1
-        # if (count == -10):
-        #     detect = True
-        distance, max_magnitude = df.range_face_detection(global_reading, 8)
-        if distance >= min_distance and distance <= max_distance:
+        result = radar.get_median_distance(1) 
+        if result != -1:
             detect = True
-            print(distance)
         if(detect):
             return Direction.NEGATIVE.value  # return that a face is found when rotating left
     return None
@@ -123,7 +111,7 @@ def moveMotor(motor: Motors, stepSize, direction: Direction):
 
 def scanFace(lowerDirection):
     upperDirection = False
-    df = Face_Detection()
+    
     moveU = True
     moveL = True
     uCounter = 0
@@ -143,8 +131,8 @@ def scanFace(lowerDirection):
                           Direction.NEGATIVE.value)
                 uCounter -= 1
 
-            distance, max_magnitude = df.range_face_detection(
-                global_reading, 8)
+            distance = global_distance
+        
             if (distance != -1):
                 dResult.append(distance)
                 uResult.append(uCounter * 0.45)
@@ -172,7 +160,7 @@ def scanFace(lowerDirection):
 
         moveMotor(Motors.LOWER.value, scanningLowerStepSize, lowerDirection)
         lCounter += 1
-        distance, max_magnitude = df.range_face_detection(global_reading, 8)
+        distance = global_distance
         if (distance != -1):
             dResult.append(distance)
             uResult.append(uCounter * 0.45)
