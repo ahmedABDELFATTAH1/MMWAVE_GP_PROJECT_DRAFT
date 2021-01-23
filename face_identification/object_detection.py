@@ -25,10 +25,10 @@ def get_readings(com_num):
         # radar.close()
         radar.start()	
     radar.clear_buffer()
-    # while 1: 
-    reading = radar.read_magnitude()   
-    if reading is not None:
-        return reading
+    while 1: 
+        reading = radar.read_magnitude()   
+        if reading is not None:
+            return reading
     
 
            
@@ -130,14 +130,26 @@ class Face_Detection():
         '''
         a simple function to test object within range 
         '''
-        print("1111111111111111111111")
-        print(len(frame))
-        range_start = 400
-        range_end= 2071
-        bin_start=int(range_start/bin_resolution)
-        bin_end=int(range_end/bin_resolution)
+        print("##################################### range_face_detection #####################################")
+        # print(frame)
+        # in the case i'm testing right now 
+        # accuracy = 2mm    # max range = 2071
+        # FFT size = 2048   # number of samples = 512   # DC canceling is ON
+        # FIR filter is ON  # Downsampling = 2  # windowing is ON
+        # so number of bins = FFT size / 2 = 2048 / 2 = 1024
+        # so logical maximum range will be = number of bins * accuracy = 1024 * 2 = 2048
+        # 1024 -------> 2048
+        #   ?  -------> 300
+        # ? = 150 = bin_start
+        # bin_end = 1024
+        range_start = 200
+        range_end= 700
+        bin_start= int(range_start/bin_resolution)
+        bin_end= int(range_end/bin_resolution)
+        print ("bin start = ",bin_start, " and ","bin end = ",bin_end)
         face_frame=frame[bin_start:min(bin_end,len(frame))-1]
         max_index=np.argmax(face_frame)
+        print ("maximum index = ", max_index)
         peak_distance=range_start + bin_resolution*max_index
         print("there is a peak at distance "+str(peak_distance))
         print("with magnitude =  "+str(max(face_frame)))

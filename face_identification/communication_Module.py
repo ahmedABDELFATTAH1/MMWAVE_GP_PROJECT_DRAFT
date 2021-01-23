@@ -38,7 +38,7 @@ class Direction(Enum):
 
 
 global_reading = None
-
+df = Face_Detection()
 
 def get_readings_thread():
     global global_reading
@@ -46,9 +46,10 @@ def get_readings_thread():
         reading = get_readings(sensor_port)
         if reading is not None:
             global_reading = reading
-            print("##########################")
-            print(len(reading))
-            print("##########################")
+            df.range_face_detection(reading,bin_resolution=1)
+            # print("##########################")
+            # print(len(reading))
+            # print("##########################")
         # else:
         #     print("IAM  NONE PLZ STOP")
 
