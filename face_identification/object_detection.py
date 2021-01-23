@@ -142,8 +142,8 @@ class Face_Detection():
         #   ?  -------> 300
         # ? = 150 = bin_start
         # bin_end = 1024
-        range_start = 200
-        range_end= 700
+        range_start = 300
+        range_end= 500
         bin_start= int(range_start/bin_resolution)
         bin_end= int(range_end/bin_resolution)
         print ("bin start = ",bin_start, " and ","bin end = ",bin_end)

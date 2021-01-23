@@ -1,3 +1,6 @@
+import numpy as np
+import plotly.express as px
+import pandas as pd
 import serial
 import time
 from enum import Enum
@@ -46,7 +49,7 @@ def get_readings_thread():
         reading = get_readings(sensor_port)
         if reading is not None:
             global_reading = reading
-            df.range_face_detection(reading,bin_resolution=1)
+            df.range_face_detection(reading,bin_resolution=0.9)
             # print("##########################")
             # print(len(reading))
             # print("##########################")
@@ -114,8 +117,8 @@ direction -->  either -1 or 1
 
 def moveMotor(motor: Motors, stepSize, direction: Direction):
     txt = motor + str(direction * stepSize) + "$"
-    #arduino.write(bytes(txt, 'utf-8'))
-    #arduino.readline()
+    arduino.write(bytes(txt, 'utf-8'))
+    arduino.readline()
 
 
 def scanFace(lowerDirection):
@@ -142,9 +145,10 @@ def scanFace(lowerDirection):
 
             distance, max_magnitude = df.range_face_detection(
                 global_reading, 8)
-            dResult.append(distance)
-            uResult.append(uCounter * 0.45)
-            lResult.append(lCounter * 0.45)
+            if (distance != -1):
+                dResult.append(distance)
+                uResult.append(uCounter * 0.45)
+                lResult.append(lCounter * 0.45)
             # if distance >= min_distance and distance <= max_distance:
             #     detect = True
             #     print(distance)
@@ -169,9 +173,10 @@ def scanFace(lowerDirection):
         moveMotor(Motors.LOWER.value, scanningLowerStepSize, lowerDirection)
         lCounter += 1
         distance, max_magnitude = df.range_face_detection(global_reading, 8)
-        dResult.append(distance)
-        uResult.append(uCounter * 0.45)
-        lResult.append(lCounter * 0.45)
+        if (distance != -1):
+            dResult.append(distance)
+            uResult.append(uCounter * 0.45)
+            lResult.append(lCounter * 0.45)
         if lCounter == 50:
             moveL = False
         # if distance >= min_distance and distance <= max_distance:
@@ -186,25 +191,55 @@ def scanFace(lowerDirection):
 
     return dResult,uResult,lResult
 
-
+def move_with_keyboard ():
+    val = ""
+    while val != "e":
+        val = input("Enter your value: ") 
+        if (val == "a"):
+            moveMotor(Motors.LOWER.value, scanningLowerStepSize, Direction.POSITIVE.value)
+        elif (val == "d"):
+            moveMotor(Motors.LOWER.value, scanningLowerStepSize, Direction.NEGATIVE.value)
+        elif (val == "w"):
+            moveMotor(Motors.UPPER.value, scanningUpperStepSize, Direction.NEGATIVE.value)
+        elif (val == "s"):
+            moveMotor(Motors.UPPER.value, scanningUpperStepSize, Direction.POSITIVE.value)
 if __name__ == "__main__":
+    arduino = set_up()
+    
     # setting upp arduino ports
     t1 = Thread(target=get_readings_thread,daemon=False)
     t1.start()
-    # arduino = set_up()
+    # move_with_keyboard ()
+    arduino = set_up()
 
     # moves the sensor in lower direction (XY plane) until the face is found
     
-    #lowerDirection = calibrateLower()
-    # lowerDirection = 1
-    # dist = []
-    # uAngel =[]
-    # lAngel = []
-    # if(lowerDirection is None):
-    #     moveMotor(Motors.LOWER.value, maxStepsOfLower,
-    #               Direction.POSITIVE.value)
-    # else:
-    #     dist,uAngel,lAngel = scanFace(lowerDirection)
+    lowerDirection = calibrateLower()
+    lowerDirection = 1
+    dist = []
+    uAngel =[]
+    lAngel = []
+    if(lowerDirection is None):
+        moveMotor(Motors.LOWER.value, maxStepsOfLower,
+                  Direction.POSITIVE.value)
+    else:
+        dist,uAngel,lAngel = scanFace(lowerDirection)
     
-    # x , y , z = np.array(dist)*np.cos(uAngel)*np.sin(lAngel) , np.array(dist)*np.cos(uAngel)*np.cos(lAngel) , np.array(dist)*np.sin(uAngel)
-    # print(x)
+    x , y , z = np.array(dist)*np.cos(uAngel)*np.sin(lAngel) , np.array(dist)*np.cos(uAngel)*np.cos(lAngel) , np.array(dist)*np.sin(uAngel)
+    print(x)
+
+    my_sample_x = np.array(x)
+    my_sample_y = np.array(y)
+    my_sample_z = np.array(z)
+    # print (my_sample_x)
+    cat_g = ['setosa']
+    sample_cat = [cat_g[np.random.randint(0,1)] for i in range (len(my_sample_z))]
+
+    df = pd.DataFrame(my_sample_x,columns=['sepal_length'])
+    df['sepal_width'] = my_sample_y
+    df['petal_width'] = my_sample_z
+    df['species'] = sample_cat
+    df.head()
+    fig = px.scatter_3d(df, x='sepal_length', y='sepal_width', z='petal_width',
+              color='species')
+    fig.show()
