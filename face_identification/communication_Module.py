@@ -19,11 +19,8 @@ calibrateLowerStepSize = 10
 calibrateLowerTotalStepsCount = 20
 
 
-configuration_file = open('configuration.json',)
-configuration_json = json.load(configuration_file)
-sensor_port = configuration_json["SENSOR_PORT"]
-max_distance = configuration_json["MAX_DISTANCE"]
-min_distance = configuration_json["MIN_DISTANCE"]
+
+
 arduino_port = configuration_json["ARDUINO_PORT"]
 
 
