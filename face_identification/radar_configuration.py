@@ -82,7 +82,7 @@ class Radar():
             count +=1
         distances = []
         for reading in readings:
-            distance,magnitude = self.range_face_detection(radar)
+            distance,magnitude = self.range_face_detection(reading)
             if magnitude > threashold:
                 distances.append(distance)
         if(len(distances)==0):
@@ -134,11 +134,20 @@ class Radar():
             index = splittedLine.index('\r\n')  # seach for the end frame
         except ValueError as e:
             print(e)
+            return None
         if (index == -1):
             return None
-        else:             
-            frame = [int(i) for i in splittedLine[3:index]]  # get the frame
-            return frame
+        else:       
+            try:      
+                frame = [int(i) for i in splittedLine[3:index]]  # get the frame   
+                      
+                print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")   
+                print(len(frame))
+                if(len(frame) != 1024):
+                    return None
+                return frame
+            except:
+                return None
         return None
 
 
