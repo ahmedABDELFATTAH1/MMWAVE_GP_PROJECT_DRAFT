@@ -10,8 +10,8 @@ from threading import Thread
 
 stepAngle = 0.45
 
-scanningLowerStepSize = 5
-scanningUpperStepSize = 5
+scanningLowerStepSize = 1
+scanningUpperStepSize = 1
 
 maxAngleUpper = 22.5
 maxStepsOfUpper = maxAngleUpper/(stepAngle*scanningUpperStepSize)
@@ -45,7 +45,7 @@ global_distance = -1
 def get_readings_thread():
     global global_distance
     while(True):
-        global_distance = radar.get_median_distance(1)
+        global_distance = radar.get_median_distance(3)
         print("global distance = ",global_distance)
 
 
@@ -54,8 +54,8 @@ def set_up():
     arduino.baudrate = 9600
     arduino.port = arduino_port
     arduino.open()
-    print(arduino.is_open)
-    print(arduino.readline())
+    #print(arduino.is_open)
+    #print(arduino.readline())
     return arduino
 
 
@@ -107,6 +107,7 @@ direction -->  either -1 or 1
 def moveMotor(motor: Motors, stepSize, direction: Direction):
     txt = motor + str(direction * stepSize) + "$"
     arduino.write(bytes(txt, 'utf-8'))
+    time.sleep(.1)
     arduino.readline()
 
 
@@ -116,6 +117,7 @@ def scanFace(lowerDirection):
     
     moveU = True
     moveL = True
+    counter =0 
     uCounter = 0
     lCounter = 0
     dResult =[]
@@ -128,59 +130,53 @@ def scanFace(lowerDirection):
                 moveMotor(Motors.UPPER.value, scanningUpperStepSize,
                           Direction.POSITIVE.value)
                 uCounter += 1
+                counter += 1
             else:
                 moveMotor(Motors.UPPER.value, scanningUpperStepSize,
                           Direction.NEGATIVE.value)
                 uCounter -= 1
+                counter +=1
             
             distance = global_distance
-            print("######################################")
-            print(distance)
-            print("######################################")
+            #print("######################################")
+            #print(distance)
+            #print("######################################")
             if (distance != -1):
                 dResult.append(distance)
-                uResult.append(uCounter * 0.45)
-                lResult.append(lCounter * 0.45)
+                uResult.append((uCounter * 0.45*np.pi)/180)
+                lResult.append((lCounter * 0.45*np.pi)/180)
             # if distance >= min_distance and distance <= max_distance:
             #     detect = True
             #     print(distance)
             #     moveU = True
             # else:
             #     moveU = False
-            print(uCounter)
-            if abs(uCounter) == maxStepsOfUpper:
+            #print(uCounter)
+
+            if counter == maxStepsOfUpper:
+                counter = 0 
                 moveU = False
         moveU = True
-        uCounter = 0
+        
         upperDirection = not upperDirection
-        if(upperDirection):
-            moveMotor(Motors.UPPER.value, scanningUpperStepSize,
-                      Direction.POSITIVE.value)
-            uCounter += 1
-        else:
-            moveMotor(Motors.UPPER.value, scanningUpperStepSize,
-                      Direction.NEGATIVE.value)
-            uCounter -= 1
+        # if(upperDirection):
+        #     moveMotor(Motors.UPPER.value, scanningUpperStepSize,
+        #               Direction.POSITIVE.value)
+        #     uCounter += 1
+        # else:
+        #     moveMotor(Motors.UPPER.value, scanningUpperStepSize,
+        #               Direction.NEGATIVE.value)
+        #     uCounter -= 1
 
         moveMotor(Motors.LOWER.value, scanningLowerStepSize, lowerDirection)
         lCounter += 1
         distance = global_distance
         if (distance != -1):
             dResult.append(distance)
-            uResult.append(uCounter * 0.45)
-            lResult.append(lCounter * 0.45)
-        if abs(lCounter) == maxStepsOfLower:
-            moveL = False
-        # if distance >= min_distance and distance <= max_distance:
-        #     detect = True
-        #     print(distance)
-        #     moveL = True
-        # else:
-        #     moveL = False
-        #     print("noooooooooooooooooooo")
-        #     print(distance)
-        #     print("noooooooooooooooooooo")
-
+            uResult.append((uCounter * 0.45*np.pi)/180)
+            lResult.append((lCounter * 0.45*np.pi)/180)
+        if lCounter == maxStepsOfLower:
+            moveL = False    
     return dResult,uResult,lResult
 
 def move_with_keyboard ():
@@ -196,14 +192,12 @@ def move_with_keyboard ():
         elif (val == "s"):
             moveMotor(Motors.UPPER.value, scanningUpperStepSize, Direction.POSITIVE.value)
 if __name__ == "__main__":
-    
-
     arduino = set_up()
     # setting upp arduino ports
     t1 = Thread(target=get_readings_thread,daemon=False)
     t1.start()
     #move_with_keyboard ()
-    t1.join()
+   
 
     # moves the sensor in lower direction (XY plane) until the face is found
     
@@ -236,5 +230,5 @@ if __name__ == "__main__":
         df['species'] = sample_cat
         df.head()
         fig = px.scatter_3d(df, x='sepal_length', y='sepal_width', z='petal_width',
-                color='species')
+                color='species',range_x = [-500,500],range_y = [-500,500],range_z=[-500,500])
         fig.show()
