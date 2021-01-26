@@ -191,13 +191,10 @@ class Radar():
         this function for reading a frame from  the radar that contains the magintude information
         '''
         #print(line)
-        try:
-            line = self.ser.readline()  # read a line from the sensor
-            newLine = line.decode("utf-8")
-            print("111")
-        except:
-            radar.generate_commnds1()
-            return None
+       
+        line = self.ser.readline()  # read a line from the sensor
+        newLine = line.decode("utf-8")
+        print("111")        
         # !R \t counter \t frame_size \t 109 \t 255 0-->-140 /r/n
         splittedLine = newLine.split("\t")
         if (splittedLine[0] != '!R'):  # check for start frame
