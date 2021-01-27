@@ -1,14 +1,133 @@
 {
-    "ARDUINO_PORT":"COM3",
+    "ARDUINO_PORT":"COM4",
     "SENSOR_PORT":"COM5" ,
     "SENSOR_FORMAT":"TSV" ,
-    "BIN_RESOLUTION":2,
-    "THRESHOLD":-40,
+    "BIN_RESOLUTION":1.8,
+    "THRESHOLD":80,
     "BAUD_RATE":1000000,
     "RANGE_OF_INTEREST":{
-        "MIN_DISTANCE":200,
-        "MAX_DISTANCE":600
+        "MIN_DISTANCE":300,
+        "MAX_DISTANCE":800
     },    
     "NUMBER_OF_TRAIN_SET":10000,
-    "NUMBER_SAMPLES":255
+    "NUMBER_SAMPLES":255,
+    "CFAR_CONFIG":
+    {
+        "GUART_NUMBER":20,
+        "BACKGROUND_NUMBER":150,
+        "RATE_FA":0.4
+    },
+    
+    "RADAR_CONFIGURATION":
+    {
+        "TRIGGER":
+        {
+            "SELF_TRIGGER":"!S11402F82",
+            "MANUAL_TRIGGER":"!S11402F84"
+        },
+        "AGC":{
+        "ENABLE_AGC":"!S11422F82",
+        "DISABLE_AGC":"!S11402F82"
+        },
+        "MODE":{
+            "WEB_GUI":"!S11422E82",
+            "TSV":"!S11462E82",
+            "BINARY":"!S114A2E82"
+        },
+        "OUTPUT":
+        {   
+            "MAGNITUDE_RANGE_ENABLE":"!S11402F82",
+            "MAGNITUDE_RANGE_DISABLE":"!S11402F02",
+            "CFAR_ENABLE":"!S11402F82",
+            "CFAR_DISABLE":"!S11402E82",
+            "TARGET_LIST_ENABLE":"!S11402F82",
+            "TARGET_LIST_DISABLE":"!S11402D82",
+            "STATUS_FRAME_ENABLE":"!S11402F82",
+            "STATUS_FRAME_DISABLE":"!S11402B82",
+            "ERROR_FRAME_ENABLE":"!S11402F82",
+            "ERROR_FRAME_DISABLE":"!S11402782"
+        },
+        "BB_PROCESSING":
+        {
+            "ADC_CLK_DIVIDER":
+            {
+                "0":"!BA452C120",
+                "1":"!BA452C121",
+                "2":"!BA452C122",
+                "3":"!BA452C123",
+                "4":"!BA452C124",
+                "5":"!BA452C125",
+                "6":"!BA452C126",
+                "7":"!BA452C127"
+            },
+            "NUMBER_OF_SAMPLES":
+            {
+                "32":"!BA452C105",
+                "64":"!BA452C10D",
+                "128":"!BA452C115",
+                "256":"!BA452C11D",
+                "512":"!BA452C125",
+                "1024":"!BA452C12D",
+                "20480":"!BA452C135"
+            },
+            "NUMBER_OF_RAMPS":
+            {
+                "1":"!BA452C01D",
+                "2":"!BA452C05D",
+                "4":"!BA452C09D",
+                "8": "!BA452C0DD",
+                "16":"!BA452C11D",
+                "32":"!BA452C15D",
+                "64":"!BA452C19D",
+                "128":"!BA452C1DD"
+            },
+            "DC_CANCLE":
+            {
+                "ON":"!BA452C0DD",
+                "OFF":"!B8452C0DD"
+            },
+            "FIR_FILTER":
+            {
+                "ON":"!BE452C0DD",
+                "OFF":"!BA452C0DD"
+            },
+            "DOWNSAMPLING":
+            {
+                "0":"!BA452C0DD",
+                "1":"!BA452C2DD",
+                "2":"!BA452C4DD",
+                "4":"!BA452C6DD",
+                "8":"!BA452C8DD",
+                "16":"!BA452CADD",
+                "32":"!BA452CCDD",
+                "64":"!BA452CEDD"
+
+            },
+            "WINDOWING":
+            {
+                "ON":"!BA452C4DD",
+                "OFF":"!B2452C4DD"
+            },
+            "FFT_SIZE":
+            {
+                "32":"!BA45284DD",
+                "64":"!BA45294DD",
+                "128":"!BA452A4DD",
+                "256":"!BA452B4DD",
+                "512":"!BA452C4DD",
+                "1024":"!BA452D4DD",
+                "2048":"!BA452E4DD"
+            },
+            "AVG_N":{
+                "0":"!BA45224DD",
+                "1":"!BA452A4DD",
+                "2":"!BA45324DD",
+                "3":"!BA453A4DD"
+                }
+
+        }
+
+
+
+    }
 }
