@@ -94,7 +94,7 @@ class Radar():
         '''
         a simple function to test object within range 
         '''        
-        print(len(frame))
+        #print(len(frame))
         range_start = self.min_distance
         range_end= self.max_distance
         bin_resolution = self.bin_resolution
@@ -141,8 +141,8 @@ class Radar():
             try:      
                 frame = [int(i) for i in splittedLine[3:index]]  # get the frame   
                       
-                print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")   
-                print(len(frame))
+                #print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")   
+                #print(len(frame))
                 if(len(frame) != 1024):
                     return None
                 return frame

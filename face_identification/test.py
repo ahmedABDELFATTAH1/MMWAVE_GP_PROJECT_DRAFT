@@ -7,6 +7,8 @@ from enum import Enum
 import json
 from radar_configuration import Radar
 from threading import Thread
+from mpl_toolkits.mplot3d import Axes3D
+import matplotlib.pyplot as plt
 
 stepAngle = 0.45
 
@@ -43,9 +45,9 @@ class Direction(Enum):
 radar = Radar()
 global_distance = -1
 def get_readings_thread():
-    global global_distance
+    global global_distadnce
     while(True):
-        global_distance = radar.get_median_distance(1)
+        global_distance = radar.get_median_distance(3)
         print("global distance = ",global_distance)
 
 
@@ -107,6 +109,7 @@ direction -->  either -1 or 1
 def moveMotor(motor: Motors, stepSize, direction: Direction):
     txt = motor + str(direction * stepSize) + "$"
     arduino.write(bytes(txt, 'utf-8'))
+    time.sleep(.1)
     arduino.readline()
 
 
@@ -118,6 +121,7 @@ def scanFace(lowerDirection):
     moveL = True
     uCounter = 0
     lCounter = 0
+    count = 0
     dResult =[]
     uResult = []
     lResult = []
@@ -128,48 +132,53 @@ def scanFace(lowerDirection):
                 moveMotor(Motors.UPPER.value, scanningUpperStepSize,
                           Direction.POSITIVE.value)
                 uCounter += 1
+                count+=1
             else:
                 moveMotor(Motors.UPPER.value, scanningUpperStepSize,
                           Direction.NEGATIVE.value)
                 uCounter -= 1
+                count+=1
             
             distance = global_distance
-            print("######################################")
-            print(distance)
-            print("######################################")
+#             print("######################################")
+#             print("upperMoter.distance = ",distance)
+#             print("upperMoter.count = ",count)
+#             print("upperMoter.uCounter = ",uCounter)
+#             print("upperMoter.lCounter = ",lCounter)
+#             print("######################################")
             if (distance != -1):
                 dResult.append(distance)
-                uResult.append(uCounter * 0.45)
-                lResult.append(lCounter * 0.45)
+                uResult.append((uCounter * 0.45*np.pi)/180)
+                lResult.append((lCounter * 0.45*np.pi)/180)
             # if distance >= min_distance and distance <= max_distance:
             #     detect = True
             #     print(distance)
             #     moveU = True
             # else:
             #     moveU = False
-            print(uCounter)
-            if abs(uCounter) == maxStepsOfUpper:
+            print("upperMoter.count = ",count)
+            if count == maxStepsOfUpper:
                 moveU = False
+                count = 0
         moveU = True
-        uCounter = 0
         upperDirection = not upperDirection
-        if(upperDirection):
-            moveMotor(Motors.UPPER.value, scanningUpperStepSize,
-                      Direction.POSITIVE.value)
-            uCounter += 1
-        else:
-            moveMotor(Motors.UPPER.value, scanningUpperStepSize,
-                      Direction.NEGATIVE.value)
-            uCounter -= 1
+        # if(upperDirection):
+        #     moveMotor(Motors.UPPER.value, scanningUpperStepSize,
+        #               Direction.POSITIVE.value)
+        #     uCounter += 1
+        # else:
+        #     moveMotor(Motors.UPPER.value, scanningUpperStepSize,
+        #               Direction.NEGATIVE.value)
+        #     uCounter -= 1
 
         moveMotor(Motors.LOWER.value, scanningLowerStepSize, lowerDirection)
         lCounter += 1
         distance = global_distance
         if (distance != -1):
             dResult.append(distance)
-            uResult.append(uCounter * 0.45)
-            lResult.append(lCounter * 0.45)
-        if abs(lCounter) == maxStepsOfLower:
+            uResult.append((uCounter * 0.45*np.pi)/180)
+            lResult.append((lCounter * 0.45*np.pi)/180)
+        if lCounter == maxStepsOfLower:
             moveL = False
         # if distance >= min_distance and distance <= max_distance:
         #     detect = True
@@ -184,17 +193,63 @@ def scanFace(lowerDirection):
     return dResult,uResult,lResult
 
 def move_with_keyboard ():
+    global global_distance
     val = ""
+    uCounter = 0
+    lCounter = 0
+    xArr = []
+    yArr = []
+    zArr = []
+    fig = plt.figure()
+    ax = fig.add_subplot(111,projection="3d")
+    
     while val != "e":
         val = input("Enter your value: ") 
-        if (val == "a"):
+        if (val == "d"):
             moveMotor(Motors.LOWER.value, scanningLowerStepSize, Direction.POSITIVE.value)
-        elif (val == "d"):
+            lCounter += 1
+        elif (val == "a"):
             moveMotor(Motors.LOWER.value, scanningLowerStepSize, Direction.NEGATIVE.value)
+            lCounter -= 1
         elif (val == "w"):
             moveMotor(Motors.UPPER.value, scanningUpperStepSize, Direction.NEGATIVE.value)
+            uCounter += 1
         elif (val == "s"):
             moveMotor(Motors.UPPER.value, scanningUpperStepSize, Direction.POSITIVE.value)
+            uCounter -= 1
+        dist = global_distance
+        uAngel = (uCounter * 0.45*np.pi)/180
+        lAngel = (lCounter * 0.45*np.pi)/180
+        x , y , z = dist*np.cos(uAngel)*np.sin(lAngel) , np.array(dist)*np.cos(uAngel)*np.cos(lAngel) , np.array(dist)*np.sin(uAngel)
+        xArr.append(x)
+        yArr.append(y)
+        zArr.append(z)
+        # fig = plt.figure()
+        # ax = fig.add_subplot(111,projection="3d")
+        my_sample_x = np.array(xArr)
+        my_sample_y = np.array(yArr)
+        my_sample_z = np.array(zArr)
+        # ax.scatter (my_sample_x,my_sample_y, my_sample_z, s=5, c="r", marker = 'o')
+        # ax.set_xlabel("X")
+        # ax.set_ylabel("Y")
+        # ax.set_zlabel("Z")
+        # ax.set_xlim(-300, 300)
+        # ax.set_ylim(-300, 300)
+        # ax.set_zlim(-300, 300)
+        # plt.show()
+        
+        cat_g = ['setosa']
+        sample_cat = [cat_g[np.random.randint(0,1)] for i in range (len(my_sample_z))]
+
+        df = pd.DataFrame(my_sample_x,columns=['sepal_length'])
+        df['sepal_width'] = my_sample_y
+        df['petal_width'] = my_sample_z
+        df['species'] = sample_cat
+        df.head()
+        fig = px.scatter_3d(df, x='sepal_length', y='sepal_width', z='petal_width',
+                color='species',range_x = [-500,500],range_y = [-500,500],range_z=[-500,500])
+        fig.show()
+
 if __name__ == "__main__":
     
 
@@ -202,8 +257,8 @@ if __name__ == "__main__":
     # setting upp arduino ports
     t1 = Thread(target=get_readings_thread,daemon=False)
     t1.start()
-    #move_with_keyboard ()
-    t1.join()
+    move_with_keyboard ()
+   
 
     # moves the sensor in lower direction (XY plane) until the face is found
     
@@ -213,7 +268,8 @@ if __name__ == "__main__":
     uAngel =[]
     lAngel = []
     if(lowerDirection is None):
-        moveMotor(Motors.LOWER.value, maxStepsOfLower, Direction.POSITIVE.value)
+        moveMotor(Motors.LOWER.value, maxStepsOfLower,
+                  Direction.POSITIVE.value)
     else:
         dist,uAngel,lAngel = scanFace(lowerDirection)
     
@@ -235,5 +291,5 @@ if __name__ == "__main__":
         df['species'] = sample_cat
         df.head()
         fig = px.scatter_3d(df, x='sepal_length', y='sepal_width', z='petal_width',
-                color='species')
+                color='species',range_x = [-500,500],range_y = [-500,500],range_z=[-500,500])
         fig.show()
