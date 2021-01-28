@@ -1,4 +1,6 @@
+
 {
+    
     "ARDUINO_PORT":"COM4",
     "SENSOR_PORT":"COM5" ,
     "SENSOR_FORMAT":"TSV" ,
@@ -130,5 +132,12 @@
 
 
 
-    }
+    },
+
+    "_comment": "Motors config section .....",
+    "STEP_ANGLE":0.45,
+    "LOWER_STEP_SIZE":1,
+    "UPPER_STEP_SIZE":1,
+    "MAX_ANGLE_UPPER":22.5,
+    "MAX_ANGLE_LOWER":22.5
 }
