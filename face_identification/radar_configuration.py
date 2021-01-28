@@ -145,6 +145,15 @@ class Radar():
                           ]
         #self.configure_radar(configuration2)
 
+    def save_readings (self):
+        file = open("radar_readings.txt", "a")
+        while 1:
+            line = self.ser.readline()  # read a line from the sensor
+            newLine = line.decode("utf-8")
+            if (newLine[0] == '!' and len(newLine) > 200):
+                print (len(newLine))
+                file.write(str(newLine)+"\n") 
+        file.close()
     def setup_radar(self):
         if(self.is_open()):
             self.close()
@@ -186,6 +195,25 @@ class Radar():
         else:
             return self.get_reading()
 
+
+    def read_magnitude_waleed(self):
+        '''
+        this function for reading a frame from  the radar that contains the magintude information
+        '''
+        filepath = 'radar_readings.txt'
+        filehandle = open(filepath, 'r')
+        while True:
+            line = filehandle.readline()
+            print(line)
+            splittedLine = line.split("\t")
+            
+            frame = [int(i) for i in splittedLine[3:len(splittedLine)-1]]  # get the frame
+
+            print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
+            print(len(frame))
+            print(frame)
+            yield  frame
+            
     def read_magnitude(self):
         '''
         this function for reading a frame from  the radar that contains the magintude information
@@ -194,7 +222,7 @@ class Radar():
        
         line = self.ser.readline()  # read a line from the sensor
         newLine = line.decode("utf-8")
-        print("111")        
+        # print("111")        
         # !R \t counter \t frame_size \t 109 \t 255 0-->-140 /r/n
         splittedLine = newLine.split("\t")
         if (splittedLine[0] != '!R'):  # check for start frame
@@ -243,14 +271,14 @@ class Radar():
         peak_idx = []
         
         alpha = num_train*(self.false_rate**(-1/num_train) - 1) # threshold facto
-        print(alpha)
+        # print(alpha)
         for i in range(num_side, num_cells - num_side):
             if i != i-num_side+np.argmax(y[i-num_side:i+num_side+1]):
                 continue
             sum1 = np.sum(y[i-num_side:i+num_side+1])
             sum2 = np.sum(y[i-num_guard_half:i+num_guard_half+1])
             p_noise = (sum1 - sum2) / num_train
-            print(p_noise)
+            # print(p_noise)
             threshold = alpha * p_noise
             if y[i] >threshold and y[i] >80 and x[i]>self.min_distance and x[i]<self.max_distance:
                 peak_idx.append(i)
@@ -271,17 +299,19 @@ class Radar():
 if __name__ == "__main__":
     radar = Radar()
     radar.setup_radar()   
-    
-    while(1):
-        frame = radar.get_reading()         
-        indexes,_ =  radar.detect_peaks(frame)  
-        if indexes is None:
-            indexes = []
-        y= np.array(frame)
-        y =y+ np.abs(np.min(y))
-        x = np.arange(y.size)*radar.bin_resolution      
-        plt.plot(x, y)
-        plt.plot(x[indexes],y[indexes], 'rD')
-        plt.xlabel('x')
-        plt.ylabel('y')
-        plt.show()
+    # radar.save_readings()
+    a =  radar.read_magnitude_waleed()
+    next(a)
+    # while(1):
+    #     frame = radar.get_reading()         
+    #     indexes,_ =  radar.detect_peaks(frame)  
+    #     if indexes is None:
+    #         indexes = []
+    #     y= np.array(frame)
+    #     y =y+ np.abs(np.min(y))
+    #     x = np.arange(y.size)*radar.bin_resolution      
+    #     plt.plot(x, y)
+    #     plt.plot(x[indexes],y[indexes], 'rD')
+    #     plt.xlabel('x')
+    #     plt.ylabel('y')
+    #     plt.show()
