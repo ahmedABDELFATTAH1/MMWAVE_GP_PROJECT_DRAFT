@@ -23,6 +23,7 @@ class Radar():
         self.background_number = self.configuration_json["CFAR_CONFIG"]["BACKGROUND_NUMBER"]
         self.false_rate = self.configuration_json["CFAR_CONFIG"]["RATE_FA"]
         self.threashold = self.configuration_json["THRESHOLD"]
+        self.frame_size = self.configuration_json["FRAME_SIZE"]
         '''
         define a connection through the serial port
         '''
@@ -193,8 +194,7 @@ class Radar():
         #print(line)
        
         line = self.ser.readline()  # read a line from the sensor
-        newLine = line.decode("utf-8")
-        print("111")        
+        newLine = line.decode("utf-8")             
         # !R \t counter \t frame_size \t 109 \t 255 0-->-140 /r/n
         splittedLine = newLine.split("\t")
         if (splittedLine[0] != '!R'):  # check for start frame
@@ -211,11 +211,7 @@ class Radar():
             try:
                 frame = [int(i)
                          for i in splittedLine[3:index]]  # get the frame
-
-                # print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-                #print(len(frame))
-                #print(frame)
-                if(len(frame) != 1024):
+                if(len(frame) != self.frame_size):
                     return None
                 return frame
             except:
@@ -252,7 +248,7 @@ class Radar():
             p_noise = (sum1 - sum2) / num_train
             print(p_noise)
             threshold = alpha * p_noise
-            if y[i] >threshold and y[i] >80 and x[i]>self.min_distance and x[i]<self.max_distance:
+            if y[i] >threshold and y[i] > self.threashold and x[i]>self.min_distance and x[i]<self.max_distance:
                 peak_idx.append(i)
             max_index = 0
             y_max = -1
@@ -270,8 +266,7 @@ class Radar():
                     
 if __name__ == "__main__":
     radar = Radar()
-    radar.setup_radar()   
-    
+    radar.setup_radar()    
     while(1):
         frame = radar.get_reading()         
         indexes,_ =  radar.detect_peaks(frame)  
