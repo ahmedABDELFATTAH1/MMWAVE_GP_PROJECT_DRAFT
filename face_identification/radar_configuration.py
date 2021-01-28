@@ -23,10 +23,11 @@ class Radar():
         self.background_number = self.configuration_json["CFAR_CONFIG"]["BACKGROUND_NUMBER"]
         self.false_rate = self.configuration_json["CFAR_CONFIG"]["RATE_FA"]
         self.threashold = self.configuration_json["THRESHOLD"]
+        self.frame_size = self.configuration_json["FRAME_SIZE"]
         '''
         define a connection through the serial port
         '''
-        self.ser = serial.Serial(port=self.sensor_port, baudrate=self.baudrate,timeout=1)
+        self.ser = serial.Serial()
 
     def is_open(self):
         '''
@@ -39,6 +40,9 @@ class Radar():
             start the connection
         '''
         try:
+            self.ser.baudrate = self.baudrate
+            self.ser.port = self.sensor_port
+            self.ser.timeout = 1
             self.ser.open()
         except:
             raise Exception('cant open connection')
@@ -146,17 +150,25 @@ class Radar():
         #self.configure_radar(configuration2)
 
     def save_readings (self):
-        file = open("radar_readings.txt", "a")
         while 1:
+            file = open("radar_readings.txt", "a")
             line = self.ser.readline()  # read a line from the sensor
             newLine = line.decode("utf-8")
-            if (newLine[0] == '!' and len(newLine) > 200):
-                print (len(newLine))
-                file.write(str(newLine)+"\n") 
-        file.close()
+            if (newLine[0] == '!'):
+                splittedLine = newLine.split("\t")
+                try :
+                    frame = [int(i) for i in splittedLine[3:len(splittedLine)-1]]
+                    if (len(frame) == 1024):
+                        print (len(frame))
+                        file.write(str(frame)+"\n") 
+                        file.close()
+                except:
+                    print ('can\'t create the frame')     
     def setup_radar(self):
         if(self.is_open()):
             self.close()
+            self.start()
+        else :
             self.start()
         self.clear_buffer()
 
@@ -164,8 +176,8 @@ class Radar():
         frame = self.get_reading()         
         indexes,distance =  self.detect_peaks(frame)  
         if indexes is None:
-            return -1        
-        return distance
+            return frame,-1, distance        
+        return frame,indexes,distance
 
     def range_face_detection(self, frame):
         '''
@@ -194,25 +206,6 @@ class Radar():
             return reading
         else:
             return self.get_reading()
-
-
-    def read_magnitude_waleed(self):
-        '''
-        this function for reading a frame from  the radar that contains the magintude information
-        '''
-        filepath = 'radar_readings.txt'
-        filehandle = open(filepath, 'r')
-        while True:
-            line = filehandle.readline()
-            print(line)
-            splittedLine = line.split("\t")
-            
-            frame = [int(i) for i in splittedLine[3:len(splittedLine)-1]]  # get the frame
-
-            print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-            print(len(frame))
-            print(frame)
-            yield  frame
             
     def read_magnitude(self):
         '''
@@ -221,13 +214,13 @@ class Radar():
         #print(line)
        
         line = self.ser.readline()  # read a line from the sensor
-        newLine = line.decode("utf-8")
-        # print("111")        
+        newLine = line.decode("utf-8")  
+        # print (newLine)           
         # !R \t counter \t frame_size \t 109 \t 255 0-->-140 /r/n
         splittedLine = newLine.split("\t")
         if (splittedLine[0] != '!R'):  # check for start frame
             return None
-        index = -1
+        index = 1
         try:
             index = splittedLine.index('\r\n')  # seach for the end frame
         except ValueError as e:
@@ -238,12 +231,8 @@ class Radar():
         else:
             try:
                 frame = [int(i)
-                         for i in splittedLine[3:index]]  # get the frame
-
-                # print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-                #print(len(frame))
-                #print(frame)
-                if(len(frame) != 1024):
+                         for i in splittedLine[3:len(splittedLine)-1]]  # get the frame
+                if(len(frame) != self.frame_size):
                     return None
                 return frame
             except:
@@ -280,7 +269,7 @@ class Radar():
             p_noise = (sum1 - sum2) / num_train
             # print(p_noise)
             threshold = alpha * p_noise
-            if y[i] >threshold and y[i] >80 and x[i]>self.min_distance and x[i]<self.max_distance:
+            if y[i] >threshold and y[i] > self.threashold and x[i]>self.min_distance and x[i]<self.max_distance:
                 peak_idx.append(i)
             max_index = 0
             y_max = -1
@@ -298,20 +287,17 @@ class Radar():
                     
 if __name__ == "__main__":
     radar = Radar()
-    radar.setup_radar()   
-    # radar.save_readings()
-    a =  radar.read_magnitude_waleed()
-    next(a)
-    # while(1):
-    #     frame = radar.get_reading()         
-    #     indexes,_ =  radar.detect_peaks(frame)  
-    #     if indexes is None:
-    #         indexes = []
-    #     y= np.array(frame)
-    #     y =y+ np.abs(np.min(y))
-    #     x = np.arange(y.size)*radar.bin_resolution      
-    #     plt.plot(x, y)
-    #     plt.plot(x[indexes],y[indexes], 'rD')
-    #     plt.xlabel('x')
-    #     plt.ylabel('y')
-    #     plt.show()
+    radar.setup_radar() 
+    while(1):
+        frame = radar.get_reading()         
+        indexes,_ =  radar.detect_peaks(frame)  
+        if indexes is None:
+            indexes = []
+        y= np.array(frame)
+        y =y+ np.abs(np.min(y))
+        x = np.arange(y.size)*radar.bin_resolution      
+        plt.plot(x, y)
+        plt.plot(x[indexes],y[indexes], 'rD')
+        plt.xlabel('x')
+        plt.ylabel('y')
+        plt.show()
