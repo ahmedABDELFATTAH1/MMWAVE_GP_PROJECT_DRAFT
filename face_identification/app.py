@@ -38,7 +38,7 @@ def update_2d_graph(y, index, bin_resolution):
     return px.scatter(df, x="x", y="y", color="color")
 
 
-#fig = px.scatter(df, x="x", y="y", color="fruit", custom_data=["customdata"])
+# fig = px.scatter(df, x="x", y="y", color="fruit", custom_data=["customdata"])
 fig = update_2d_graph(np.random.uniform(low=0.5, high=13.3, size=(50,)), 1, 1)
 fig.data[0].update(mode='markers')
 
@@ -50,7 +50,7 @@ colors = {
 }
 
 markdown_text = '''
-### Dash and Markdown
+# Dash and Markdown
 
 Dash apps can be written in Markdown.
 Dash uses the [CommonMark](http://commonmark.org/)
@@ -123,7 +123,10 @@ app.layout = html.Div(children=[
 def update_graph_scatter(n):
     fig = update_2d_graph(np.random.uniform(low=0.5, high=13.3, size=(50,)), 1, 1)
     fig.data[0].update(mode='lines+markers')
-
+    fig.update_layout(uirevision="foo")
+    #draw.data[0].update(mode='lines+markers')
+    #fig.add_trace(draw)
+    #fig.update_layout(uirevision="foo")
     return fig
 
 
