@@ -48,7 +48,7 @@ def get_readings_thread():
     global global_distance
     while(True):
         global_distance = radar.get_median_distance(1)       
-        print("global distance = ",global_distance)
+        # print("global distance = ",global_distance)
 
 
 def set_up():
@@ -211,54 +211,54 @@ if __name__ == "__main__":
 
     arduino = set_up()
     # setting upp arduino ports
-    # t1 = Thread(target=get_readings_thread,daemon=True)
-    # t1.start()
-    move_with_keyboard ()
+    t1 = Thread(target=get_readings_thread,daemon=True)
+    t1.start()
+    # move_with_keyboard ()
    
 
     # moves the sensor in lower direction (XY plane) until the face is found
     
     # lowerDirection = calibrateLower()
-#     lowerDirection = 1
-#     dist = []
-#     uAngel =[]
-#     lAngel = []
-#     if(lowerDirection is None):
-#         moveMotor(Motors.LOWER.value, maxStepsOfLower,
-#                   Direction.POSITIVE.value)
-#     else:
-#         dist,uAngel,lAngel = scanFace(lowerDirection)
-#         print (dist,uAngel,lAngel)
-#         x , y , z = np.array(dist)*np.cos(uAngel)*np.sin(lAngel) , np.array(dist)*np.cos(uAngel)*np.cos(lAngel) , np.array(dist)*np.sin(uAngel)
-#         print(x)
-#         print(y)
-#         print(z)
+    lowerDirection = 1
+    dist = []
+    uAngel =[]
+    lAngel = []
+    if(lowerDirection is None):
+        moveMotor(Motors.LOWER.value, maxStepsOfLower,
+                  Direction.POSITIVE.value)
+    else:
+        dist,uAngel,lAngel = scanFace(lowerDirection)
+        # print (dist,uAngel,lAngel)
+        x , y , z = np.array(dist)*np.cos(uAngel)*np.sin(lAngel) , np.array(dist)*np.cos(uAngel)*np.cos(lAngel) , np.array(dist)*np.sin(uAngel)
+        # print(x)
+        # print(y)
+        # print(z)
 
-#         my_sample_x = np.array(x)
-#         my_sample_y = np.array(y)
-#         my_sample_z = np.array(z)
+        my_sample_x = np.array(x)
+        my_sample_y = np.array(y)
+        my_sample_z = np.array(z)
         
-#         print ("size of the my_sample_x before drawing :: ",len(my_sample_x))
-#         print ("size of the my_sample_y before drawing :: ",len(my_sample_y))
-#         print ("size of the my_sample_z before drawing :: ",len(my_sample_z))
-# #         fig = plt.figure()
-# #         ax = fig.add_subplot(111,projection="3d")
-# #         ax.scatter (my_sample_x,my_sample_y, my_sample_z, s=5, c="r", marker = 'o')
-# #         ax.set_xlabel("X")
-# #         ax.set_ylabel("Y")
-# #         ax.set_zlabel("Z")
-# # #         ax.set_xlim(-100, 100)
-# # #         ax.set_ylim(-100, 100)
-# # #         ax.set_zlim(-100, 100)
-# #         plt.show()
-#         cat_g = ['setosa']
-#         sample_cat = [cat_g[np.random.randint(0,1)] for i in range (len(my_sample_z))]
+        print ("size of the my_sample_x before drawing :: ",len(my_sample_x))
+        print ("size of the my_sample_y before drawing :: ",len(my_sample_y))
+        print ("size of the my_sample_z before drawing :: ",len(my_sample_z))
+#         fig = plt.figure()
+#         ax = fig.add_subplot(111,projection="3d")
+#         ax.scatter (my_sample_x,my_sample_y, my_sample_z, s=5, c="r", marker = 'o')
+#         ax.set_xlabel("X")
+#         ax.set_ylabel("Y")
+#         ax.set_zlabel("Z")
+# #         ax.set_xlim(-100, 100)
+# #         ax.set_ylim(-100, 100)
+# #         ax.set_zlim(-100, 100)
+#         plt.show()
+        cat_g = ['setosa']
+        sample_cat = [cat_g[np.random.randint(0,1)] for i in range (len(my_sample_z))]
 
-#         df = pd.DataFrame(my_sample_x,columns=['sepal_length'])
-#         df['sepal_width'] = my_sample_y
-#         df['petal_width'] = my_sample_z
-#         df['species'] = sample_cat
-#         df.head()
-#         fig = px.scatter_3d(df, x='sepal_length', y='sepal_width', z='petal_width',
-#                 color='species',range_x = [-500,500],range_y = [-500,500],range_z=[-500,500])
-#         fig.show()
+        df = pd.DataFrame(my_sample_x,columns=['sepal_length'])
+        df['sepal_width'] = my_sample_y
+        df['petal_width'] = my_sample_z
+        df['species'] = sample_cat
+        df.head()
+        fig = px.scatter_3d(df, x='sepal_length', y='sepal_width', z='petal_width',
+                color='species')
+        fig.show()
