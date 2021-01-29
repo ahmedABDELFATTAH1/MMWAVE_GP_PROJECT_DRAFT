@@ -1,7 +1,7 @@
 
 {
     "ARDUINO_PORT":"COM3",
-    "SENSOR_PORT":"COM4" ,
+    "SENSOR_PORT":"COM5" ,
     "SENSOR_FORMAT":"TSV" ,
     "BIN_RESOLUTION":1,
     "FRAME_SIZE":1024,
@@ -134,10 +134,67 @@
 
     },
 
-    "_comment": "Motors config section .....",
+    "_comment_motors": "Motors config section .....",
     "STEP_ANGLE":0.45,
     "LOWER_STEP_SIZE":1,
     "UPPER_STEP_SIZE":1,
     "MAX_ANGLE_UPPER":22.5,
-    "MAX_ANGLE_LOWER":22.5
+    "MAX_ANGLE_LOWER":22.5,
+
+    "_comment_radar": "Radar config section .....",
+    "SYS_CONFIG":{
+        "ID":"!S",
+        "SELF_TRIG_DELAY":"000",
+        "CL":"1",
+        "LOG":"0",
+        "FMT":"0",
+        "LED":"01",
+        "RESERVED":"0000",
+        "PROTOCOL":"01",
+        "AGC":"0",
+        "GAIN":"000",
+        "SER2":"1",
+        "SER1":"0",
+        "ERR":"0",
+        "ST":"1",
+        "TL":"0",
+        "C":"0",
+        "R":"1",
+        "P":"0",
+        "CPL":"0",
+        "RAW":"0",
+        "REST":"00",
+        "SLF":"1",
+        "PRE":"0"
+    },
+    
+    "RFE_CONFIG":{
+        "ID":"!F",
+        "RESERVED":"00000000000",
+        "RFE_BASE_FREQ":""
+    },
+
+    "PLL_CONFIG":{
+        "ID":"!P",
+        "RESERVED":"0000000000000000",
+        "BANDWIDTH":"011111111111110"
+    },
+
+    "BB_CONFIG":{
+        "ID":"!B",
+        "WIN":"1",
+        "FIR":"1",
+        "DC":"1",
+        "CFAR":"00",
+        "CFAR_THRESHOLD":"1000",
+        "CFAR_SIZE":"1010",
+        "CFAR_GRD":"01",
+        "AVERAGE_N":"01",
+        "FFT_SIZE":"110",
+        "DOWNSAMPLING":"000",
+        "#RAMPS":"010",
+        "#SAMPLES":"010",
+        "ADC_CLK_DIV":"110"
+    }
+
 }
