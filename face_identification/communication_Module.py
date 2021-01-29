@@ -200,6 +200,63 @@ def scanFace(lowerDirection):
         #     print("noooooooooooooooooooo")
     return dResult,uResult,lResult
 
+
+def scan2D_lower():
+     global global_distance
+    
+    lCounter = 0
+    
+    xResult = []
+    yResult = []
+    while(lCounter == maxStepsOfLower): 
+        distance = global_distance
+        print("##############scan2D###############")
+        print("distance = ",distance)
+        print("lCounter = ",lCounter)
+        print("######################################")
+        if (distance != -1):
+            yResult.append(distance)
+            xResult.append((lCounter * scanningLowerStepSize)
+
+        else:
+            yResult.append(0)
+            xResult.append((lCounter * scanningLowerStepSize)
+
+        moveMotor(Motors.LOWER.value, scanningLowerStepSize, Direction.POSITIVE.value)
+        lCounter += 1
+
+    moveMotor(Motors.LOWER.value, scanningLowerStepSize * maxStepsOfLower, Direction.NEGATIVE.value)
+    return xResult,yResult
+
+def scan2D_upper():
+     global global_distance
+    
+    uCounter = 0
+    
+    xResult = []
+    yResult = []
+
+    
+    while(uCounter == maxStepsOfUpper):
+        distance = global_distance
+        print("##############scan2D###############")
+        print("distance = ",distance)
+        print("lCounter = ",uCounter)
+        print("######################################")
+        if (distance != -1):
+            yResult.append(distance)
+            xResult.append((uCounter * scanningUpperStepSize)
+
+        else:
+            yResult.append(0)
+            xResult.append((lCounter * scanningUpperStepSize)
+
+        moveMotor(Motors.UPPER.value, scanningUpperStepSize, Direction.POSITIVE.value)
+        uCounter += 1
+
+    moveMotor(Motors.UPPER.value, scanningUpperStepSize * maxStepsOfUpper, Direction.NEGATIVE.value)
+    return xResult,yResult
+    
 def move_with_keyboard ():
     val = ""
     while val != "e":
