@@ -220,7 +220,7 @@ class Radar():
         splittedLine = newLine.split("\t")
         if (splittedLine[0] != '!R'):  # check for start frame
             return None
-        index = 1
+        index = -1
         try:
             index = splittedLine.index('\r\n')  # seach for the end frame
         except ValueError as e:
@@ -231,7 +231,7 @@ class Radar():
         else:
             try:
                 frame = [int(i)
-                         for i in splittedLine[3:len(splittedLine)-1]]  # get the frame
+                         for i in splittedLine[3:index]]  # get the frame
                 if(len(frame) != self.frame_size):
                     return None
                 return frame

@@ -7,6 +7,7 @@
     "FRAME_SIZE":1024,
     "THRESHOLD":80,
     "BAUD_RATE":1000000,
+    "PORT" : "5556",
     "RANGE_OF_INTEREST":{
         "MIN_DISTANCE":300,
         "MAX_DISTANCE":1000

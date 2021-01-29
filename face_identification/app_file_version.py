@@ -44,7 +44,7 @@ def update_2d_graph(y, index, bin_resolution):
         "color": color
     })
 
-    return px.scatter(df, x="x", y="y", color="color")
+    return px.scatter(df, x="x", y="y", color="color", range_y = [-140,30])
 
 
 # fig = px.scatter(df, x="x", y="y", color="fruit", custom_data=["customdata"])
@@ -128,6 +128,7 @@ def update_graph_scatter(n):
     frame = json.loads(line)
     index,_ = radar.detect_peaks(frame)
     fig = update_2d_graph(frame, index, 1)
+    
     fig.data[0].update(mode='lines+markers')
     fig.update_layout(uirevision="foo")
     open('radar_readings.txt', 'w').close()
