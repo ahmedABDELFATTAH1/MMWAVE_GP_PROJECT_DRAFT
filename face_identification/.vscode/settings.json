@@ -1,5 +1,5 @@
 {
-    "python.pythonPath": "D:\\ProgramData\\Anaconda3\\envs\\tensorflow\\python.exe",
+    "python.pythonPath": "C:\\Users\\Abdullah Ezzat\\anaconda3\\envs\\hello-tf\\python.exe",
     "python.formatting.provider": "autopep8",
     "python.linting.pylintEnabled": true,
     "python.linting.enabled": true
