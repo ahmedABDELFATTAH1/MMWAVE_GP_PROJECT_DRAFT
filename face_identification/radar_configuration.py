@@ -168,7 +168,7 @@ class Radar():
         frame = self.get_reading()         
         indexes,distance =  self.detect_peaks(frame)  
         if indexes is None:
-            return frame,-1, distance        
+            return frame,-1, -1        
         return frame,indexes,distance
 
     def range_face_detection(self, frame):
@@ -204,9 +204,8 @@ class Radar():
         this function for reading a frame from  the radar that contains the magintude information
         '''
         #print(line)
-        print('test pass')
         line = self.ser.readline()  # read a line from the sensor
-        print(line)
+        #print(line)
         newLine = line.decode("utf-8")  
         # print (newLine)           
         # !R \t counter \t frame_size \t 109 \t 255 0-->-140 /r/n
