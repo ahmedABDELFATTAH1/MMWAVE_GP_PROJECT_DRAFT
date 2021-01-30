@@ -1,11 +1,11 @@
 
 {
     "ARDUINO_PORT":"COM3",
-    "SENSOR_PORT":"COM5" ,
+    "SENSOR_PORT":"COM4" ,
     "SENSOR_FORMAT":"TSV" ,
     "BIN_RESOLUTION":1,
     "FRAME_SIZE":1024,
-    "THRESHOLD":80,
+    "THRESHOLD":60,
     "BAUD_RATE":1000000,
     "PORT" : "5556",
     "RANGE_OF_INTEREST":{
@@ -21,118 +21,6 @@
         "RATE_FA":0.4
     },
     
-    "RADAR_CONFIGURATION":
-    {
-        "TRIGGER":
-        {
-            "SELF_TRIGGER":"!S11402F82",
-            "MANUAL_TRIGGER":"!S11402F84"
-        },
-        "AGC":{
-        "ENABLE_AGC":"!S11422F82",
-        "DISABLE_AGC":"!S11402F82"
-        },
-        "MODE":{
-            "WEB_GUI":"!S11422E82",
-            "TSV":"!S11462E82",
-            "BINARY":"!S114A2E82"
-        },
-        "OUTPUT":
-        {   
-            "MAGNITUDE_RANGE_ENABLE":"!S11402F82",
-            "MAGNITUDE_RANGE_DISABLE":"!S11402F02",
-            "CFAR_ENABLE":"!S11402F82",
-            "CFAR_DISABLE":"!S11402E82",
-            "TARGET_LIST_ENABLE":"!S11402F82",
-            "TARGET_LIST_DISABLE":"!S11402D82",
-            "STATUS_FRAME_ENABLE":"!S11402F82",
-            "STATUS_FRAME_DISABLE":"!S11402B82",
-            "ERROR_FRAME_ENABLE":"!S11402F82",
-            "ERROR_FRAME_DISABLE":"!S11402782"
-        },
-        "BB_PROCESSING":
-        {
-            "ADC_CLK_DIVIDER":
-            {
-                "0":"!BA452C120",
-                "1":"!BA452C121",
-                "2":"!BA452C122",
-                "3":"!BA452C123",
-                "4":"!BA452C124",
-                "5":"!BA452C125",
-                "6":"!BA452C126",
-                "7":"!BA452C127"
-            },
-            "NUMBER_OF_SAMPLES":
-            {
-                "32":"!BA452C105",
-                "64":"!BA452C10D",
-                "128":"!BA452C115",
-                "256":"!BA452C11D",
-                "512":"!BA452C125",
-                "1024":"!BA452C12D",
-                "20480":"!BA452C135"
-            },
-            "NUMBER_OF_RAMPS":
-            {
-                "1":"!BA452C01D",
-                "2":"!BA452C05D",
-                "4":"!BA452C09D",
-                "8": "!BA452C0DD",
-                "16":"!BA452C11D",
-                "32":"!BA452C15D",
-                "64":"!BA452C19D",
-                "128":"!BA452C1DD"
-            },
-            "DC_CANCLE":
-            {
-                "ON":"!BA452C0DD",
-                "OFF":"!B8452C0DD"
-            },
-            "FIR_FILTER":
-            {
-                "ON":"!BE452C0DD",
-                "OFF":"!BA452C0DD"
-            },
-            "DOWNSAMPLING":
-            {
-                "0":"!BA452C0DD",
-                "1":"!BA452C2DD",
-                "2":"!BA452C4DD",
-                "4":"!BA452C6DD",
-                "8":"!BA452C8DD",
-                "16":"!BA452CADD",
-                "32":"!BA452CCDD",
-                "64":"!BA452CEDD"
-
-            },
-            "WINDOWING":
-            {
-                "ON":"!BA452C4DD",
-                "OFF":"!B2452C4DD"
-            },
-            "FFT_SIZE":
-            {
-                "32":"!BA45284DD",
-                "64":"!BA45294DD",
-                "128":"!BA452A4DD",
-                "256":"!BA452B4DD",
-                "512":"!BA452C4DD",
-                "1024":"!BA452D4DD",
-                "2048":"!BA452E4DD"
-            },
-            "AVG_N":{
-                "0":"!BA45224DD",
-                "1":"!BA452A4DD",
-                "2":"!BA45324DD",
-                "3":"!BA453A4DD"
-                }
-
-        }
-
-
-
-    },
 
     "_comment_motors": "Motors config section .....",
     "STEP_ANGLE":0.45,
@@ -152,11 +40,11 @@
         "RESERVED":"0000",
         "PROTOCOL":"01",
         "AGC":"0",
-        "GAIN":"000",
+        "GAIN":"101",
         "SER2":"1",
         "SER1":"0",
         "ERR":"0",
-        "ST":"1",
+        "ST":"0",
         "TL":"0",
         "C":"0",
         "R":"1",
@@ -177,13 +65,13 @@
     "PLL_CONFIG":{
         "ID":"!P",
         "RESERVED":"0000000000000000",
-        "BANDWIDTH":"011111111111110"
+        "BANDWIDTH":"000100111000100"
     },
 
     "BB_CONFIG":{
         "ID":"!B",
         "WIN":"1",
-        "FIR":"1",
+        "FIR":"0",
         "DC":"1",
         "CFAR":"00",
         "CFAR_THRESHOLD":"1000",
@@ -191,10 +79,10 @@
         "CFAR_GRD":"01",
         "AVERAGE_N":"01",
         "FFT_SIZE":"110",
-        "DOWNSAMPLING":"000",
-        "#RAMPS":"010",
-        "#SAMPLES":"010",
-        "ADC_CLK_DIV":"110"
+        "DOWNSAMPLING":"011",
+        "#RAMPS":"100",
+        "#SAMPLES":"100",
+        "ADC_CLK_DIV":"101"
     }
 
 }
