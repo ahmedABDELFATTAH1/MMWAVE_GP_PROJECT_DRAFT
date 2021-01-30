@@ -14,13 +14,13 @@ import pickle
 
 stepAngle = 0.45
 
-scanningLowerStepSize = 1
+scanningLowerStepSize = 2
 scanningUpperStepSize = 1
 
 maxAngleUpper = 22.5
 maxStepsOfUpper = maxAngleUpper/(stepAngle*scanningUpperStepSize)
 
-maxAngleLower = 22.5
+maxAngleLower = 45
 maxStepsOfLower = maxAngleLower/(stepAngle*scanningLowerStepSize)
 
 calibrateLowerStepSize = 10
@@ -43,19 +43,22 @@ class Direction(Enum):
     NEGATIVE = -1
 
 
-# radar = Radar()
-# radar.setup_radar()
-# global_distance = -1
-# global_indexes = -1
-# global_frame = -1
-# def get_readings_thread():
-#     global global_distance, global_indexes, global_frame
-#     while(True):
-#         global_frame,global_indexes,global_distance = radar.get_median_distance(1)  
-#         # socket.send_string("%d,%s" % (topic, str(global_frame)))
-#         socket.send_multipart([b'status',pickle.dumps(global_frame), pickle.dumps(global_indexes)])
-#         time.sleep(1)
-        # print("global distance = ",global_distance)
+radar = Radar()
+radar.setup_radar()
+radar.setup_radar_system_configuration()
+radar.setup_radar_pll_configuration()
+radar.setup_radar_baseband_configuration()
+global_distance = -1
+global_indexes = -1
+global_frame = -1
+def get_readings_thread():
+    global global_distance, global_indexes, global_frame
+    while(True):
+        global_frame,global_indexes,global_distance = radar.get_median_distance(1)  
+        # socket.send_string("%d,%s" % (topic, str(global_frame)))
+        #socket.send_multipart([b'status',pickle.dumps(global_frame), pickle.dumps(global_indexes)])
+        time.sleep(1)
+        print("global distance = ",global_distance)
 
 
 def set_up():
@@ -116,7 +119,7 @@ direction -->  either -1 or 1
 def moveMotor(motor: Motors, stepSize, direction: Direction):
     txt = motor + str(direction * stepSize) + "$"
     arduino.write(bytes(txt, 'utf-8'))
-    time.sleep(.1)
+    time.sleep(1)
     arduino.readline()
 
 
@@ -202,25 +205,25 @@ def scanFace(lowerDirection):
 
 
 def scan2D_lower():
-     global global_distance
+    global global_distance
     
     lCounter = 0
     
     xResult = []
     yResult = []
-    while(lCounter == maxStepsOfLower): 
+    while(lCounter != maxStepsOfLower): 
         distance = global_distance
         print("##############scan2D###############")
         print("distance = ",distance)
         print("lCounter = ",lCounter)
         print("######################################")
-        if (distance != -1):
+        if (distance != -1 and distance != None):
             yResult.append(distance)
-            xResult.append((lCounter * scanningLowerStepSize)
-
+            xResult.append((lCounter * scanningLowerStepSize))
+        
         else:
             yResult.append(0)
-            xResult.append((lCounter * scanningLowerStepSize)
+            xResult.append((lCounter * scanningLowerStepSize))
 
         moveMotor(Motors.LOWER.value, scanningLowerStepSize, Direction.POSITIVE.value)
         lCounter += 1
@@ -229,7 +232,7 @@ def scan2D_lower():
     return xResult,yResult
 
 def scan2D_upper():
-     global global_distance
+    global global_distance
     
     uCounter = 0
     
@@ -237,19 +240,19 @@ def scan2D_upper():
     yResult = []
 
     
-    while(uCounter == maxStepsOfUpper):
+    while(uCounter != maxStepsOfUpper):
         distance = global_distance
         print("##############scan2D###############")
         print("distance = ",distance)
         print("lCounter = ",uCounter)
         print("######################################")
-        if (distance != -1):
+        if (distance != -1 and distance != None):
             yResult.append(distance)
-            xResult.append((uCounter * scanningUpperStepSize)
+            xResult.append((uCounter * scanningUpperStepSize))
 
         else:
             yResult.append(0)
-            xResult.append((lCounter * scanningUpperStepSize)
+            xResult.append((uCounter * scanningUpperStepSize))
 
         moveMotor(Motors.UPPER.value, scanningUpperStepSize, Direction.POSITIVE.value)
         uCounter += 1
@@ -278,11 +281,18 @@ if __name__ == "__main__":
     # context = zmq.Context()
     # socket = context.socket(zmq.PUB)
     # socket.bind("tcp://*:%s" % port)
-    # t1 = Thread(target=get_readings_thread,daemon=True)
-    # t1.start()
-    # t1.join()
-    move_with_keyboard ()
-   
+    t1 = Thread(target=get_readings_thread,daemon=True)
+    t1.start()
+    #t1.join()
+    #move_with_keyboard ()
+    x , y = scan2D_lower()
+    print(x)
+    print(y)
+    plt.plot(x, y)
+    plt.xlabel('x')
+    plt.ylabel('y')
+    plt.show()
+
 
     # moves the sensor in lower direction (XY plane) until the face is found
     
