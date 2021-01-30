@@ -12,6 +12,11 @@ import numpy as np
 from threading import Thread
 from radar_configuration import Radar
 
+
+configuration_file = open('configuration.json',)
+configuration_json = json.load(configuration_file)
+bin_resolution = configuration_json["BIN_RESOLUTION"] 
+
 np.random.seed(1)
 
 global_reading =np.random.uniform(low=0.5, high=13.3, size=(50,))
@@ -49,7 +54,7 @@ def update_2d_graph(y, index, bin_resolution):
 
 # fig = px.scatter(df, x="x", y="y", color="fruit", custom_data=["customdata"])
 # fig = update_2d_graph(np.random.uniform(low=0.5, high=13.3, size=(50,)), 1, 1)
-fig = update_2d_graph(global_reading, 1, 1)
+fig = update_2d_graph(global_reading, 1, bin_resolution)
 fig.data[0].update(mode='markers')
 
 
@@ -127,7 +132,7 @@ def update_graph_scatter(n):
     # print (json.loads(line))
     frame = json.loads(line)
     index,_ = radar.detect_peaks(frame)
-    fig = update_2d_graph(frame, index, 1)
+    fig = update_2d_graph(frame, index, bin_resolution)
     
     fig.data[0].update(mode='lines+markers')
     fig.update_layout(uirevision="foo")
