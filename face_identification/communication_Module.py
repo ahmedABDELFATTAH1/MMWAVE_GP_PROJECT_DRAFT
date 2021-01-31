@@ -12,17 +12,6 @@ import matplotlib.pyplot as plt
 import zmq
 import pickle
 
-stepAngle = 0.45
-
-scanningLowerStepSize = 2
-scanningUpperStepSize = 1
-
-maxAngleUpper = 22.5
-maxStepsOfUpper = maxAngleUpper/(stepAngle*scanningUpperStepSize)
-
-maxAngleLower = 45
-maxStepsOfLower = maxAngleLower/(stepAngle*scanningLowerStepSize)
-
 calibrateLowerStepSize = 10
 calibrateLowerTotalStepsCount = 20
 
@@ -32,6 +21,21 @@ configuration_file = open('configuration.json',)
 configuration_json = json.load(configuration_file)
 arduino_port = configuration_json["ARDUINO_PORT"]
 port = configuration_json["PORT"]
+
+stepAngle = configuration_json["STEP_ANGLE"]
+
+scanningLowerStepSize = configuration_json["LOWER_STEP_SIZE"]
+scanningUpperStepSize = configuration_json["UPPER_STEP_SIZE"]
+
+maxAngleUpper = configuration_json["MAX_ANGLE_UPPER"]
+maxStepsOfUpper = maxAngleUpper/(stepAngle*scanningUpperStepSize)
+
+maxAngleLower = configuration_json["MAX_ANGLE_LOWER"]
+maxStepsOfLower = maxAngleLower/(stepAngle*scanningLowerStepSize)
+
+state_min = configuration_json["STATE_MIN"]
+state_max = configuration_json["STATE_MAX"]
+state_counter = state_min
 
 class Motors(Enum):
     LOWER = 'l'
@@ -59,6 +63,21 @@ def get_readings_thread():
         #socket.send_multipart([b'status',pickle.dumps(global_frame), pickle.dumps(global_indexes)])
         time.sleep(1)
         print("global distance = ",global_distance)
+
+def error_correction(previous,current):
+    global state_counter
+    if current != -1:
+        if(state_counter < state_max):
+                state_counter+=1
+        
+        return current
+
+    else:
+        if state_counter == state_min:
+            return current
+        else:
+            state_counter-=1
+            return previous
 
 
 def set_up():
@@ -137,7 +156,6 @@ def scanFace(lowerDirection):
     uResult = []
     lResult = []
     while(moveL):
-
         while(moveU):
             if(upperDirection):
                 moveMotor(Motors.UPPER.value, scanningUpperStepSize,
@@ -208,15 +226,16 @@ def scan2D_lower():
     global global_distance
     
     lCounter = 0
-    
     xResult = []
     yResult = []
+    previous_distance = -1
     while(lCounter != maxStepsOfLower): 
         distance = global_distance
         print("##############scan2D###############")
         print("distance = ",distance)
         print("lCounter = ",lCounter)
         print("######################################")
+        distance = error_correction(previous_distance,distance)
         if (distance != -1 and distance != None):
             yResult.append(distance)
             xResult.append((lCounter * scanningLowerStepSize))
@@ -225,8 +244,11 @@ def scan2D_lower():
             yResult.append(0)
             xResult.append((lCounter * scanningLowerStepSize))
 
+        
         moveMotor(Motors.LOWER.value, scanningLowerStepSize, Direction.POSITIVE.value)
         lCounter += 1
+        previous_distance = distance
+
 
     moveMotor(Motors.LOWER.value, scanningLowerStepSize * maxStepsOfLower, Direction.NEGATIVE.value)
     return xResult,yResult
