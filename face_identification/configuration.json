@@ -1,24 +1,24 @@
 
 {
     "ARDUINO_PORT":"COM5",
-    "SENSOR_PORT":"COM7" ,
+    "SENSOR_PORT":"COM4" ,
     "SENSOR_FORMAT":"TSV" ,
-    "BIN_RESOLUTION":0.9,
+    "BIN_RESOLUTION":2,
     "STATE_MIN":0,
     "STATE_MAX":2,
     "FRAME_SIZE":1024,
-    "THRESHOLD":60,
+    "THRESHOLD":160,
     "BAUD_RATE":1000000,
     "PORT" : "5556",
     "RANGE_OF_INTEREST":{
-        "MIN_DISTANCE":300,
-        "MAX_DISTANCE":1000
+        "MIN_DISTANCE":250,
+        "MAX_DISTANCE":600
     },    
     "NUMBER_OF_TRAIN_SET":10000,
     "NUMBER_SAMPLES":255,
     "CFAR_CONFIG":
     {
-        "GUART_NUMBER":20,
+        "GUART_NUMBER":5,
         "BACKGROUND_NUMBER":150,
         "RATE_FA":0.4
     },
@@ -26,10 +26,10 @@
 
     "_comment_motors": "Motors config section .....",
     "STEP_ANGLE":0.45,
-    "LOWER_STEP_SIZE":2,
+    "LOWER_STEP_SIZE":1,
     "UPPER_STEP_SIZE":1,
-    "MAX_ANGLE_UPPER":22.5,
-    "MAX_ANGLE_LOWER":45,
+    "MAX_ANGLE_UPPER":9,
+    "MAX_ANGLE_LOWER":9,
 
     "_comment_radar": "Radar config section .....",
     "SYS_CONFIG":{
@@ -41,8 +41,8 @@
         "LED":"01",
         "RESERVED":"0000",
         "PROTOCOL":"01",
-        "AGC":"0",
-        "GAIN":"011",
+        "AGC":"1",
+        "GAIN":"000",
         "SER2":"1",
         "SER1":"0",
         "ERR":"0",
@@ -73,7 +73,7 @@
     "BB_CONFIG":{
         "ID":"!B",
         "WIN":"1",
-        "FIR":"0",
+        "FIR":"1",
         "DC":"1",
         "CFAR":"00",
         "CFAR_THRESHOLD":"1000",
@@ -81,9 +81,9 @@
         "CFAR_GRD":"01",
         "AVERAGE_N":"01",
         "FFT_SIZE":"110",
-        "DOWNSAMPLING":"100",
-        "#RAMPS":"000",
-        "#SAMPLES":"101",
+        "DOWNSAMPLING":"010",
+        "#RAMPS":"010",
+        "#SAMPLES":"100",
         "ADC_CLK_DIV":"101"
     }
 
