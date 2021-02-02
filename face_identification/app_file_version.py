@@ -122,7 +122,8 @@ app.layout = html.Div(children=[
 )
 def update_graph_scatter(n):
     filereader = open('radar_readings.txt', 'r')
-    line = filereader.readlines()[0]
+    lines = filereader.readlines()
+    line = lines[len(lines)-1]
     filereader.close()
     # print (json.loads(line))
     frame = json.loads(line)

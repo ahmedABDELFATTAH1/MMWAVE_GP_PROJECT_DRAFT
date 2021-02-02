@@ -14,8 +14,8 @@ import pickle
 
 stepAngle = 0.45
 
-scanningLowerStepSize = 1
-scanningUpperStepSize = 1
+scanningLowerStepSize = 5
+scanningUpperStepSize = 5
 
 maxAngleUpper = 22.5
 maxStepsOfUpper = maxAngleUpper/(stepAngle*scanningUpperStepSize)
