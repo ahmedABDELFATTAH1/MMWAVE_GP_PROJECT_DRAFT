@@ -6,6 +6,7 @@ import json
 import matplotlib.pyplot as plt
 
 
+
 class Radar():
     '''
     this is the radar configuration class this will implement all low level communication with the radar sensor
@@ -74,81 +75,72 @@ class Radar():
         readings.append(reading)
         return readings
 
-    def configure_radar(self, commands):
-        for command in commands:
-            self.ser.write((command+"\r\n").encode())
-        self.clear_buffer()
-        time.sleep(1)
-    def generate_commnds1(self):
-        #!S11462E82
-        #!S11422E82
-        configuration = [
-            "!F08075300",
-            self.configuration_json["RADAR_CONFIGURATION"]["TRIGGER"]["SELF_TRIGGER"],
-            self.configuration_json["RADAR_CONFIGURATION"]["AGC"]["DISABLE_AGC"],
-            self.configuration_json["RADAR_CONFIGURATION"]["OUTPUT"]["MAGNITUDE_RANGE_ENABLE"],
-            self.configuration_json["RADAR_CONFIGURATION"]["OUTPUT"]["CFAR_DISABLE"],
-            self.configuration_json["RADAR_CONFIGURATION"]["OUTPUT"]["TARGET_LIST_DISABLE"],
-            self.configuration_json["RADAR_CONFIGURATION"]["OUTPUT"]["STATUS_FRAME_DISABLE"],
-            self.configuration_json["RADAR_CONFIGURATION"]["OUTPUT"]["ERROR_FRAME_DISABLE"],
-            self.configuration_json["RADAR_CONFIGURATION"]["BB_PROCESSING"]["ADC_CLK_DIVIDER"]["5"],
-            self.configuration_json["RADAR_CONFIGURATION"]["BB_PROCESSING"]["NUMBER_OF_SAMPLES"]["512"],
-            self.configuration_json["RADAR_CONFIGURATION"]["BB_PROCESSING"]["NUMBER_OF_RAMPS"]["8"],
-            self.configuration_json["RADAR_CONFIGURATION"]["BB_PROCESSING"]["DC_CANCLE"]["ON"],
-            self.configuration_json["RADAR_CONFIGURATION"]["BB_PROCESSING"]["FIR_FILTER"]["ON"],
-            self.configuration_json["RADAR_CONFIGURATION"]["BB_PROCESSING"]["DOWNSAMPLING"]["2"],
-            self.configuration_json["RADAR_CONFIGURATION"]["BB_PROCESSING"]["WINDOWING"]["ON"],
-            self.configuration_json["RADAR_CONFIGURATION"]["BB_PROCESSING"]["FFT_SIZE"]["1024"],
-            self.configuration_json["RADAR_CONFIGURATION"]["BB_PROCESSING"]["AVG_N"]["1"],
-            self.configuration_json["RADAR_CONFIGURATION"]["MODE"]["TSV"]
-        ]
+    ####################Configurations_Section#######################
 
-        '''
-        !F08075300
-        !BA452C115
-        !BA452C0D5
-        !BE452C0D5
-        !BE452E0D5
+    def configure_radar(self, command):
+        self.ser.write((command+"\r\n").encode())
 
-        '''
-        configuration1 = [               
-                "!F08075300",
-                "!BA452C115",
-                "!S11402F82",
-                "!BE452C125",
-                "!BA452C0D5",
-                "!BE452C0D5",
-                "!BE452E0D5",
-                "!S11442082" ,                
-                "!BA452C125",
-                "!S11402F82",
-                "!K",
-                "!BA452C115",
-                "!BA452C095",
-                "!BA452E095",
-                "!BE452E095",
-                "!S11402E82",
-                "!S11402E82",
-                "!S11402C82",
-                "!S11402C82",
-                "!S11402882",
-                "!S11402882",
-                "!S11402082",
-                "!S11402082",
-                "!S11442082"
-                          ]
+    
+    def setup_radar_system_configuration(self):
+        json_config = self.configuration_json["SYS_CONFIG"]
+        config_str = ""
+        for key in json_config:
+            if key == "ID":
+                continue
+            config_str = config_str + json_config[key]
 
-        configuration2 = ["!F08075300",
-                          "!BA452C115",
-                          "!S11402F82",
-                          "!BE452C125",
-                          "!BA452C0D5",
-                          "!BE452C0D5",
-                          "!BE452E0D5",
-                          "!S11442082"                          
-                          ]
-        #self.configure_radar(configuration2)
+        config_str = '%0*X' % ((len(config_str) + 3) // 4, int(config_str, 2))
+        config_str = json_config["ID"] + config_str
+        self.configure_radar(config_str)
 
+    def setup_radar_front_end_configuration(self):
+        json_config = self.configuration_json["RFE_CONFIG"]
+        config_str = ""
+        for key in json_config:
+            if key == "ID":
+                continue
+            config_str = config_str + json_config[key]
+
+        config_str = '%0*X' % ((len(config_str) + 3) // 4, int(config_str, 2))
+        config_str = json_config["ID"] + config_str
+        self.configure_radar(config_str)
+
+    def setup_radar_pll_configuration(self):
+        json_config = self.configuration_json["PLL_CONFIG"]
+        config_str = ""
+        for key in json_config:
+            if key == "ID":
+                continue
+            config_str = config_str + json_config[key]
+
+        config_str = '%0*X' % ((len(config_str) + 3) // 4, int(config_str, 2))
+        config_str = json_config["ID"] + config_str
+        self.configure_radar(config_str)
+
+    def setup_radar_baseband_configuration (self):
+        json_config = self.configuration_json["BB_CONFIG"]
+        config_str = ""
+        for key in json_config:
+            if key == "ID":
+                continue
+            config_str = config_str + json_config[key]
+
+        config_str = '%0*X' % ((len(config_str) + 3) // 4, int(config_str, 2))
+        config_str = json_config["ID"] + config_str
+        self.configure_radar(config_str)
+
+    def setup_radar_all_configurations(self):
+        self.setup_radar_system_configuration()
+        self.setup_radar_front_end_configuration()
+        self.setup_radar_pll_configuration()
+        self.setup_radar_baseband_configuration()
+
+    def setup_radar_set_max_bandwidth (self):
+        config_str = "!K00000000"
+        self.configure_radar(config_str)
+
+
+    ##################################################################    
     def save_readings (self):
         while 1:
             file = open("radar_readings.txt", "a")
@@ -162,6 +154,8 @@ class Radar():
                         print (len(frame))
                         file.write(str(frame)+"\n") 
                         file.close()
+                    else:
+                        print ('error in frame size')
                 except:
                     print ('can\'t create the frame')     
     def setup_radar(self):
@@ -176,7 +170,7 @@ class Radar():
         frame = self.get_reading()         
         indexes,distance =  self.detect_peaks(frame)  
         if indexes is None:
-            return frame,-1, distance        
+            return frame,-1, -1        
         return frame,indexes,distance
 
     def range_face_detection(self, frame):
@@ -212,11 +206,12 @@ class Radar():
         this function for reading a frame from  the radar that contains the magintude information
         '''
         #print(line)
-       
         line = self.ser.readline()  # read a line from the sensor
+        #print(line)
         newLine = line.decode("utf-8")  
         # print (newLine)           
         # !R \t counter \t frame_size \t 109 \t 255 0-->-140 /r/n
+        
         splittedLine = newLine.split("\t")
         if (splittedLine[0] != '!R'):  # check for start frame
             return None
@@ -232,6 +227,7 @@ class Radar():
             try:
                 frame = [int(i)
                          for i in splittedLine[3:index]]  # get the frame
+                print("message",splittedLine[0:4])
                 if(len(frame) != self.frame_size):
                     return None
                 return frame
@@ -282,22 +278,22 @@ class Radar():
             else:
                 return max_index,x[max_index]
        
-
     
                     
 if __name__ == "__main__":
     radar = Radar()
     radar.setup_radar() 
     while(1):
-        frame = radar.get_reading()         
-        indexes,_ =  radar.detect_peaks(frame)  
-        if indexes is None:
-            indexes = []
-        y= np.array(frame)
-        y =y+ np.abs(np.min(y))
-        x = np.arange(y.size)*radar.bin_resolution      
-        plt.plot(x, y)
-        plt.plot(x[indexes],y[indexes], 'rD')
-        plt.xlabel('x')
-        plt.ylabel('y')
-        plt.show()
+        radar.save_readings()
+        # frame = radar.get_reading()         
+        # indexes,_ =  radar.detect_peaks(frame)  
+        # if indexes is None:
+        #     indexes = []
+        # y= np.array(frame)
+        # y =y+ np.abs(np.min(y))
+        # x = np.arange(y.size)*radar.bin_resolution      
+        # plt.plot(x, y)
+        # plt.plot(x[indexes],y[indexes], 'rD')
+        # plt.xlabel('x')
+        # plt.ylabel('y')
+        # plt.show()
