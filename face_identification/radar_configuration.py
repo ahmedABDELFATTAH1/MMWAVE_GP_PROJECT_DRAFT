@@ -150,7 +150,7 @@ class Radar():
                 splittedLine = newLine.split("\t")
                 try :
                     frame = [int(i) for i in splittedLine[3:len(splittedLine)-1]]
-                    if (len(frame) == 1024):
+                    if (len(frame) == 512):
                         print (len(frame))
                         file.write(str(frame)+"\n") 
                         file.close()
@@ -219,7 +219,7 @@ class Radar():
         try:
             index = splittedLine.index('\r\n')  # seach for the end frame
         except ValueError as e:
-            print(e)
+            #print(e)
             return None
         if (index == -1):
             return None
@@ -227,7 +227,7 @@ class Radar():
             try:
                 frame = [int(i)
                          for i in splittedLine[3:index]]  # get the frame
-                print("message",splittedLine[0:4])
+                #print("message",splittedLine[0:4])
                 if(len(frame) != self.frame_size):
                     return None
                 return frame
@@ -274,9 +274,10 @@ class Radar():
                     max_index = index
                     y_max = y[index]
             if y_max ==-1:
-                return None,None
+                return None,None,None
             else:
-                return max_index,x[max_index]
+                # maxindex, distance, db
+                return max_index,x[max_index],y[max_index]
        
     
                     

@@ -15,6 +15,7 @@ from radar_configuration import Radar
 np.random.seed(1)
 
 global_reading =np.random.uniform(low=0.5, high=13.3, size=(50,))
+readings = []
 radar =Radar()
 
 
@@ -127,7 +128,8 @@ def update_graph_scatter(n):
     filereader.close()
     # print (json.loads(line))
     frame = json.loads(line)
-    index,_ = radar.detect_peaks(frame)
+    index, distance, db_frame = radar.detect_peaks(frame)
+    readings.append(db_frame)
     fig = update_2d_graph(frame, index, 1)
     
     fig.data[0].update(mode='lines+markers')

@@ -15,7 +15,9 @@ import pickle
 calibrateLowerStepSize = 10
 calibrateLowerTotalStepsCount = 20
 
-
+global_counter = 0
+readings = []
+distances = []
 
 configuration_file = open('configuration.json',)
 configuration_json = json.load(configuration_file)
@@ -47,31 +49,31 @@ class Direction(Enum):
     NEGATIVE = -1
 
 
-# radar = Radar()
+radar = Radar()
 # radar.setup_radar()
 # radar.setup_radar_system_configuration()
 # radar.setup_radar_pll_configuration()
 # radar.setup_radar_baseband_configuration()
 
-global_distance = -1
-global_indexes = -1
-global_frame = -1
+# global_distance = -1
+# global_indexes = -1
+# global_frame = -1
 
-radar = Radar()
-radar.setup_radar()
+# radar = Radar()
+# radar.setup_radar()
 
-def get_readings_thread():
+# def get_readings_thread():
     
-    global global_distance, global_indexes, global_frame
-    while(True):
-        # global_frame,global_indexes,global_distance = radar.get_median_distance(1)  
-        frame = radar.get_reading()
-        #print(len(frame))
+#     global global_distance, global_indexes, global_frame
+#     while(True):
+#         # global_frame,global_indexes,global_distance = radar.get_median_distance(1)  
+#         frame = radar.get_reading()
+#         #print(len(frame))
         
-        # socket.send_string("%d,%s" % (topic, str(global_frame)))
-        #socket.send_multipart([b'status',pickle.dumps(global_frame), pickle.dumps(global_indexes)])
+#         # socket.send_string("%d,%s" % (topic, str(global_frame)))
+#         #socket.send_multipart([b'status',pickle.dumps(global_frame), pickle.dumps(global_indexes)])
        
-        print("global distance = ",global_distance)
+#         print("global distance = ",global_distance)
 
 def error_correction(previous,current):
     global state_counter
@@ -234,37 +236,58 @@ def scanFace(lowerDirection):
         previous_distance = distance
     return dResult,uResult,lResult
 
-
+def test_function():
+    global readings, global_counter
+    filereader = open('radar_readings.txt', 'r')
+    lines = filereader.readlines()
+    line = lines[len(lines)-1]
+    filereader.close()
+    # print (json.loads(line))
+    frame = json.loads(line)
+    try:
+        index, distance, db_frame = radar.detect_peaks(frame)
+        print("step number = ",global_counter," with db value = ", db_frame, " with a distance = ",distance)
+        if (db_frame != None):
+            distances.append(distance)
+            readings.append(db_frame)
+        else:
+            distances.append(0)
+            readings.append(0)
+        open('radar_readings.txt', 'w').close()
+    except:
+        readings.append(0)
 def scan2D_lower():
-    global global_distance
+    global global_distance, global_counter
     
     lCounter = 0
     xResult = []
     yResult = []
     previous_distance = -1
     while(lCounter != maxStepsOfLower): 
-        distance = global_distance
+        global_counter = lCounter
+        test_function()
+        # distance = global_distance
         # distance = -1
-        print("##############scan2D###############")
-        print("distance = ",distance)
-        print("lCounter = ",lCounter)
-        print("######################################")
-        distance = error_correction(previous_distance,distance)
-        if (distance != -1 and distance != None):
-            yResult.append(distance)
-            xResult.append((lCounter * scanningLowerStepSize))
+        # print("##############scan2D###############")
+        # print("distance = ",distance)
+        # print("lCounter = ",lCounter)
+        # print("######################################")
+        # distance = error_correction(previous_distance,distance)
+        # if (distance != -1 and distance != None):
+        #     yResult.append(distance)
+        #     xResult.append((lCounter * scanningLowerStepSize))
         
-        else:
-            yResult.append(0)
-            xResult.append((lCounter * scanningLowerStepSize))
+        # else:
+        #     yResult.append(0)
+        #     xResult.append((lCounter * scanningLowerStepSize))
 
         
-        moveMotor(Motors.LOWER.value, scanningLowerStepSize, Direction.POSITIVE.value)
+        moveMotor(Motors.LOWER.value, scanningLowerStepSize, Direction.NEGATIVE.value)
         lCounter += 1
-        previous_distance = distance
+        # previous_distance = distance
 
 
-    moveMotor(Motors.LOWER.value, scanningLowerStepSize * maxStepsOfLower, Direction.NEGATIVE.value)
+    moveMotor(Motors.LOWER.value, scanningLowerStepSize * maxStepsOfLower, Direction.POSITIVE.value)
     return xResult,yResult
 
 def scan2D_upper():
@@ -309,18 +332,48 @@ def move_with_keyboard ():
         elif (val == "w"):
             moveMotor(Motors.UPPER.value, scanningUpperStepSize, Direction.POSITIVE.value)
 
-if __name__ == "__main__":
-    
+i=1
+j=1
 
-    # arduino = set_up()
-    #scan2D_lower()
+if __name__ == "__main__":
+    arduino = set_up()
+    n = 2
+    fig, ax = plt.subplots(nrows=n, ncols=2)
+    
+   
+
+    for i in range(n):
+        scan2D_lower()
+        x = [i for i in range(0, len(readings), 1)]
+        #plt.subplot(211)
+        ax[i][0].plot(x, distances,marker="o")
+        #plt.subplot(212)
+        ax[i][1].plot(x, readings,marker="o")
+        distances = []
+        readings = []
+        
+        # plt.plot(x, readings)
+        # plt.plot(x, distances)
+        #plot1 = plt.figure(1)
+        ####################
+        
+        moveMotor(Motors.UPPER.value, scanningUpperStepSize, Direction.NEGATIVE.value)
+    
+    moveMotor(Motors.UPPER.value, scanningUpperStepSize*n, Direction.POSITIVE.value)
+    
+  
+    plt.show()   
+    #####################3
+    # plt.xlabel('x')
+    # plt.ylabel('y')
+    # plt.show()
     # setting upp arduino ports
     # context = zmq.Context()
     # socket = context.socket(zmq.PUB)
     # socket.bind("tcp://*:%s" % port)
-    t1 = Thread(target=get_readings_thread,daemon=True)
-    t1.start()
-    t1.join()
+    # t1 = Thread(target=get_readings_thread,daemon=True)
+    # t1.start()
+    # t1.join()
     # move_with_keyboard ()
     #2d scanning
     ####################################################3
