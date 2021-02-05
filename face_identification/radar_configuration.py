@@ -235,7 +235,21 @@ class Radar():
                 return None
         return None
 
-    def detect_peaks(self,frame):
+    def get_max_magnitude_in_range(self,frame):
+        min_index_range = int(self.min_distance/self.bin_resolution)
+        max_index_range = int(self.max_distance/self.bin_resolution)
+        max_index = np.argmax(frame[min_index_range:max_index_range])
+        max_index = min_index_range + max_index
+        max_distance = max_index * self.bin_resolution
+        max_magnitude = frame[max_index]
+        return max_index,max_distance,max_magnitude
+
+
+        
+
+        
+
+    def detect_peaks(self,frame, calibiration_mode, max_db):
         """
         Detect peaks with CFAR algorithm.
 
@@ -265,19 +279,31 @@ class Radar():
             p_noise = (sum1 - sum2) / num_train
             # print(p_noise)
             threshold = alpha * p_noise
-            if y[i] >threshold and y[i] > self.threashold and x[i]>self.min_distance and x[i]<self.max_distance:
-                peak_idx.append(i)
-            max_index = 0
-            y_max = -1
-            for index in peak_idx:
-                if y[index] > y_max:
-                    max_index = index
-                    y_max = y[index]
-            if y_max ==-1:
-                return None,None,None
+            if calibiration_mode == True:
+                if y[i] >threshold and x[i]>self.min_distance and x[i]<self.max_distance:
+                    peak_idx.append(i)
             else:
-                # maxindex, distance, db
-                return max_index,x[max_index],y[max_index]
+                if y[i] >threshold and ((y[i]/max_db) >= self.threashold) and x[i]>self.min_distance and x[i]<self.max_distance:
+                    peak_idx.append(i)
+            # print("size of x",len(x))
+        max_index = 0
+        y_max = -1
+        for index in peak_idx:
+            print ("inside peak detect")
+            if y[index] > y_max:
+                max_index = index
+                y_max = y[index]
+        if y_max == -1:
+            # print("baaaad")
+            # print ("inside detect peaks frame with value = None ",frame)
+            return None,None,None
+        else:
+            # maxindex, distance, db
+            # if max_index == 0:
+            #     #print("Hellooooo")
+            #     #print(x)
+            #     pass
+            return max_index,x[max_index],y[max_index]
        
     
                     
