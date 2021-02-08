@@ -151,7 +151,7 @@ direction -->  either -1 or 1
 def moveMotor(motor: Motors, stepSize, direction: Direction):
     txt = motor + str(direction * stepSize) + "$"
     arduino.write(bytes(txt, 'utf-8'))
-    time.sleep(0.2)
+    time.sleep(0)
     arduino.readline()
 
 
@@ -160,7 +160,7 @@ def scanFace(max_db):
     moveU = True
     moveL = True
     uCounter = 0
-    lCounter = Direction.NEGATIVE.value * (maxStepsOfLower/2)
+    lCounter = Direction.NEGATIVE.value * ((maxStepsOfLower*scanningLowerStepSize)/2)
     count = 0
     count_lower_end = 0
     dResult =[]
@@ -375,9 +375,9 @@ def beam_pattern ():
     plt.show()
 def calibiration_seen ():
     global readings, distances
-    moveMotor(Motors.LOWER.value, (maxStepsOfLower/2), Direction.NEGATIVE.value)
+    moveMotor(Motors.LOWER.value, ((maxStepsOfLower*scanningLowerStepSize)/2), Direction.NEGATIVE.value)
     scan2D_lower(True,0)
-    moveMotor(Motors.LOWER.value, (maxStepsOfLower/2), Direction.POSITIVE.value)
+    moveMotor(Motors.LOWER.value, ((maxStepsOfLower*scanningLowerStepSize)/2), Direction.POSITIVE.value)
     readings_np = np.array(readings)
     max_db = np.max(readings_np)
     readings = []
@@ -437,14 +437,14 @@ j=1
 #     file.close()
 
 if __name__ == "__main__":
-    i = 1
+    i = "ezzat body"
     arduino = set_up()
     file = open("Experements_3D.txt", "a")
     max_db = calibiration_seen ()
     print ("MAX_dB = ",max_db)
-    moveMotor(Motors.LOWER.value, (maxStepsOfLower/2), Direction.NEGATIVE.value)
+    moveMotor(Motors.LOWER.value, ((maxStepsOfLower*scanningLowerStepSize)/2), Direction.NEGATIVE.value)
     dist,uAngel,lAngel = scanFace(max_db)
-    moveMotor(Motors.LOWER.value, (maxStepsOfLower/2), Direction.POSITIVE.value)
+    moveMotor(Motors.LOWER.value, ((maxStepsOfLower*scanningLowerStepSize)/2), Direction.NEGATIVE.value)
     x , y , z = np.array(dist)*np.cos(uAngel)*np.sin(lAngel) , np.array(dist)*np.cos(uAngel)*np.cos(lAngel) , np.array(dist)*np.sin(uAngel)
     my_sample_x = np.array(x)
     my_sample_y = np.array(y)
@@ -455,15 +455,15 @@ if __name__ == "__main__":
     file.write(str(my_sample_z)+"\n")
     file.write("########################################################################################\n")  
     file.close()
-    cat_g = ['setosa']
+    cat_g = ['Object Point']
     sample_cat = [cat_g[np.random.randint(0,1)] for i in range (len(my_sample_z))]
-    df = pd.DataFrame(my_sample_x,columns=['X'])
-    df['Y'] = my_sample_y
-    df['Z'] = my_sample_z
+    df = pd.DataFrame(my_sample_x,columns=['X (mm)'])
+    df['Y (mm)'] = my_sample_y
+    df['Z (mm)'] = my_sample_z
     df['Color'] = sample_cat
     df.head()
-    fig = px.scatter_3d(df, x='X', y='Y', z='Z',
-            color='Color')
+    fig = px.scatter_3d(df, x='X (mm)', y='Y (mm)', z='Z (mm)',
+            color='Color', title="3D Model")
     fig.show()
     #####################3
     # plt.xlabel('x')

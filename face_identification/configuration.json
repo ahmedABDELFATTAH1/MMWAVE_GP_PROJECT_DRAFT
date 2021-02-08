@@ -7,12 +7,12 @@
     "STATE_MIN":0,
     "STATE_MAX":2,
     "FRAME_SIZE":512,
-    "THRESHOLD":0.47,
+    "THRESHOLD":0.4,
     "BAUD_RATE":1000000,
     "PORT" : "5556",
     "RANGE_OF_INTEREST":{
-        "MIN_DISTANCE":400,
-        "MAX_DISTANCE":900
+        "MIN_DISTANCE":500,
+        "MAX_DISTANCE":1300
     },    
     "NUMBER_OF_TRAIN_SET":10000,
     "NUMBER_SAMPLES":255,
@@ -26,9 +26,9 @@
 
     "_comment_motors": "Motors config section .....",
     "STEP_ANGLE":0.45,
-    "LOWER_STEP_SIZE":1,
-    "UPPER_STEP_SIZE":1,
-    "MAX_ANGLE_UPPER":4.5,
+    "LOWER_STEP_SIZE":2,
+    "UPPER_STEP_SIZE":4,
+    "MAX_ANGLE_UPPER":45,
     "MAX_ANGLE_LOWER":67.5,
 
     "_comment_radar": "Radar config section .....",
