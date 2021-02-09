@@ -15,9 +15,10 @@ import pickle
 calibrateLowerStepSize = 10
 calibrateLowerTotalStepsCount = 20
 
-counter_depth_test_function = 0
+counter_depth_get_dist_mag = 0
 max_depth = 10
 global_counter = 0
+motors_delay  = 0
 readings = []
 distances = []
 
@@ -41,6 +42,7 @@ state_min = configuration_json["STATE_MIN"]
 state_max = configuration_json["STATE_MAX"]
 state_counter = state_min
 
+
 class Motors(Enum):
     LOWER = 'l'
     UPPER = 'u'
@@ -51,18 +53,13 @@ class Direction(Enum):
     NEGATIVE = -1
 
 
-radar = Radar()
-# radar.setup_radar()
-# radar.setup_radar_system_configuration()
-# radar.setup_radar_pll_configuration()
-# radar.setup_radar_baseband_configuration()
+
+
 
 # global_distance = -1
 # global_indexes = -1
 # global_frame = -1
 
-# radar = Radar()
-# radar.setup_radar()
 
 # def get_readings_thread():
     
@@ -103,41 +100,6 @@ def set_up():
     return arduino
 
 
-"""
-if face was found return the direction of the lower motor 
-else return none
-"""
-
-
-def calibrateLower():    
-    detect = False
-    count = 0
-    # looping until face is found or rotated 90 degrees to the right
-    while(count < calibrateLowerTotalStepsCount):
-        moveMotor(Motors.LOWER.value, calibrateLowerStepSize,
-                  Direction.POSITIVE.value)
-        count += 1
-        result = radar.get_median_distance(1) 
-        if result != -1:
-            detect = True
-                 
-        if(detect):
-            return Direction.POSITIVE.value  # return that a face is found when rotating right
-    moveMotor(Motors.LOWER.value, calibrateLowerStepSize *
-              calibrateLowerTotalStepsCount, Direction.NEGATIVE.value)
-    count = 0
-    # looping until face is found or rotated 90 degrees to the left
-    while(not detect and count > -1 * calibrateLowerTotalStepsCount):
-        moveMotor(Motors.LOWER.value, calibrateLowerStepSize,
-                  Direction.NEGATIVE.value)
-        count -= 1
-        result = radar.get_median_distance(1) 
-        if result != -1:
-            detect = True
-        if(detect):
-            return Direction.NEGATIVE.value  # return that a face is found when rotating left
-    return None
-
 
 """
 Moves motor in arduino
@@ -146,12 +108,10 @@ motor --> can be either 'l' for lower motor
 stepSize --> (integer) number of steps that the motor will move (step = 0.45 angle)
 direction -->  either -1 or 1 
 """
-
-
 def moveMotor(motor: Motors, stepSize, direction: Direction):
     txt = motor + str(direction * stepSize) + "$"
     arduino.write(bytes(txt, 'utf-8'))
-    time.sleep(0)
+    time.sleep(motors_delay)
     arduino.readline()
 
 
@@ -169,7 +129,7 @@ def scanFace(max_db):
     while(moveL):
         previous_distance = -1
         while(moveU):
-            index,distance,db_frame = test_function(False, max_db)
+            index,distance,db_frame = get_dist_mag(False, max_db)
             # distance = error_correction(previous_distance , distance)
             print("######################################")
             print("upperMoter.distance = ",distance)
@@ -197,7 +157,7 @@ def scanFace(max_db):
             previous_distance = distance
         moveU = True
         upperDirection = not upperDirection
-        index,distance,db_frame = test_function(False, max_db)
+        index,distance,db_frame = get_dist_mag(False, max_db)
         # distance = error_correction(previous_distance , distance)
         if (distance != -1):
             dResult.append(distance)
@@ -211,52 +171,42 @@ def scanFace(max_db):
         previous_distance = distance
     return dResult,uResult,lResult
 
-def test_function(calibiration_mode, max_db):
-    global readings, global_counter, counter_depth_test_function, max_depth
+def get_dist_mag(calibiration_mode, max_db):
+    global readings, global_counter, counter_depth_get_dist_mag, max_depth
     filereader = open('radar_readings.txt', 'r')
-    print ("counter_depth_test_function = ", counter_depth_test_function)
+    print ("counter_depth_get_dist_mag = ", counter_depth_get_dist_mag)
     lines = filereader.readlines()
     while (len(lines) == 0):
         lines = filereader.readlines()
     line = lines[len(lines)-1]
     filereader.close()
-    # print (json.loads(line))
+   
     try :
         frame = json.loads(line)
     except:
         open('radar_readings.txt', 'w').close()
-        return test_function(calibiration_mode, max_db)
-    # try:
+        return get_dist_mag(calibiration_mode, max_db)
+   
     index, distance, db_frame = radar.detect_peaks(frame, calibiration_mode, max_db)
     # index, distance, db_frame = radar.get_max_magnitude_in_range(frame)
     print("step number = ",global_counter," with db value = ", db_frame, " with a distance = ",distance)
     if (db_frame != None):
         distances.append(distance)
         readings.append(db_frame)
-        counter_depth_test_function = 0
+        counter_depth_get_dist_mag = 0
         open('radar_readings.txt', 'w').close()
         return index, distance, db_frame
-    elif counter_depth_test_function < max_depth:
-        # distances.append(0)
-        # readings.append(0)
-        counter_depth_test_function += 1
-        return test_function(calibiration_mode, max_db)
+    elif counter_depth_get_dist_mag < max_depth:
+        
+        counter_depth_get_dist_mag += 1
+        return get_dist_mag(calibiration_mode, max_db)
     else:
         distances.append(0)
         readings.append(0)
-        counter_depth_test_function = 0
+        counter_depth_get_dist_mag = 0
         open('radar_readings.txt', 'w').close()
         return -1, -1, -1
-    # except:
-    #     # readings.append(0)
-    #     # distances.append(0)
-    #     if counter_depth_test_function < max_depth:
-    #         counter_depth_test_function += 1
-    #         test_function()
-    #     else:
-    #         counter_depth_test_function = 0
-    #         open('radar_readings.txt', 'w').close()
-    #         return None
+    
 def scan2D_lower(calibiration_mode, max_db):
     global global_distance, global_counter
     
@@ -266,7 +216,7 @@ def scan2D_lower(calibiration_mode, max_db):
     previous_distance = -1
     while(lCounter != maxStepsOfLower): 
         global_counter = lCounter
-        test_function(calibiration_mode, max_db)
+        get_dist_mag(calibiration_mode, max_db)
         # distance = global_distance
         # distance = -1
         # print("##############scan2D###############")
@@ -291,34 +241,6 @@ def scan2D_lower(calibiration_mode, max_db):
     moveMotor(Motors.LOWER.value, scanningLowerStepSize * maxStepsOfLower, Direction.NEGATIVE.value)
     return xResult,yResult
 
-def scan2D_upper():
-    global global_distance
-    
-    uCounter = 0
-    
-    xResult = []
-    yResult = []
-
-    
-    while(uCounter != maxStepsOfUpper):
-        distance = global_distance
-        print("##############scan2D###############")
-        print("distance = ",distance)
-        print("lCounter = ",uCounter)
-        print("######################################")
-        if (distance != -1 and distance != None):
-            yResult.append(distance)
-            xResult.append((uCounter * scanningUpperStepSize))
-
-        else:
-            yResult.append(0)
-            xResult.append((uCounter * scanningUpperStepSize))
-
-        moveMotor(Motors.UPPER.value, scanningUpperStepSize, Direction.POSITIVE.value)
-        uCounter += 1
-
-    moveMotor(Motors.UPPER.value, scanningUpperStepSize * maxStepsOfUpper, Direction.NEGATIVE.value)
-    return xResult,yResult
     
 def move_with_keyboard ():
     val = ""
@@ -328,51 +250,12 @@ def move_with_keyboard ():
             moveMotor(Motors.LOWER.value, scanningLowerStepSize, Direction.POSITIVE.value)
         elif (val == "a"):
             moveMotor(Motors.LOWER.value, scanningLowerStepSize, Direction.NEGATIVE.value)
-        elif (val == "s"):
-            moveMotor(Motors.UPPER.value, scanningUpperStepSize, Direction.NEGATIVE.value)
         elif (val == "w"):
+            moveMotor(Motors.UPPER.value, scanningUpperStepSize, Direction.NEGATIVE.value)
+        elif (val == "s"):
             moveMotor(Motors.UPPER.value, scanningUpperStepSize, Direction.POSITIVE.value)
-def distance_drawing():
-    readings = [-94, -94, -98, -100, -103, -102, -103, -102, -103, -99, -103, -99, -99, -100, -100, -100, -95, -100, -97, -97, -99, -99, -93, -93, -93, -97, -93, -89, -87, -85, -86, -85, -84, -91, -97, -99, -96, -96, -93, -93, -96, -96, -89, -83, -75, -74, -77, -84, -93, -96, -87, -83, -81, -80, -80, -81, -86, -87, -75, -64, -57, -50, -45, -43, -42, -40, -39, -38, -36, -34, -31, -28, -25, -22, -21, -19, -19, -18, -16, -11, -7, 0, 4, 6, 8, 9, 9, 8, 5, 2, -8, -11, -24, -29, -29, -20, -19, -13, -11, -12, -13, -16, -19, -20, -21, -20, -21, -24, -27, -33, -40, -44, -47, -47, -46, -47, -48, -53, -67, -72, -72, -69, -68, -68, -70, -74, -87, -81, -66, -75, -72, -70, -60, -79, -77, -85, -85, -90, -88, -91, -96, -96, -92, -91, -91, -90, -91, -90, -93, -91]
-    readings_np = np.array(readings)
-    distance = [792, 788, 788, 796, 756, 608, 764, 796, 604, 796, 772, 768, 776, 756, 768, 776, 784, 776, 780, 780, 784, 796, 796, 796, 796, 796, 796, 796, 796, 796, 796, 796, 796, 796, 504, 512, 520, 796, 796, 796, 796, 796, 796, 796, 796, 796, 796, 796, 796, 772, 780, 792, 796, 796, 796, 796, 796, 764, 796, 796, 796, 796, 796, 796, 796, 796, 796, 796, 796, 796, 792, 792, 792, 784, 788, 788, 788, 784, 780, 784, 780, 784, 780, 780, 780, 780, 780, 784, 780, 780, 784, 784, 784, 792, 784, 788, 788, 784, 784, 784, 788, 784, 784, 784, 788, 792, 792, 788, 792, 792, 792, 792, 796, 796, 796, 796, 796, 796, 796, 768, 768, 780, 784, 784, 780, 780, 776, 796, 796, 792, 788, 796, 792, 788, 788, 776, 776, 796, 796, 796, 796, 768, 776, 768, 768, 776, 780, 784, 780, 780]
-    counter = 0
-    flag = 1
-    for i in range (len(distance)):  
-        angel = ((counter * 0.45*np.pi)/180)
-        distance[i] = distance[i] * np.cos(angel)
-        if (readings_np[i]/np.max(readings_np)) == 1:
-            flag = -1
-        counter += flag
 
-    x = [num for num in range(0, len(distance), 1)]
-    plt.xlabel('Step')
-    plt.ylabel('Distance in (mm)')
-    plt.plot(x, distance,marker="o")
-    plt.grid(True)
-    plt.suptitle('Distance', fontsize=25)
-    plt.show()
-def beam_pattern ():
-    readings_ex1 = [-30, -32, -34, -33, -25, -21, -18, -17, -16, -15, -12, -7, -7, -8, -14, -18, -13, -9, -9, -18, -24, -27, -9, -10, -16, -16, -5, 0, 2, 3, 10, 15, 18, 21, 19, 17, 22, 30, 38, 45, 48, 49, 55, 58, 60, 63, 64, 63, 62, 60, 57, 52, 45, 41, 38, 35, 26, 16, 6, 13, 15, 15, 10, 4, 3, -8, -14, -17, -10, -8, -8, -14, -15, -20, -19, -23, -28, -23, -17, -7, -4, -5, -16, -19, -25, -33, -36, -46, -38, -31, -33, -35, -33, -24, -20, -19, -28, -37, -41, -43]
-    readings_ex2 = [-38, -38, -34, -28, -23, -20, -17, -17, -20, -22, -24, -20, -8, -5, -4, 0, 0, 2, 5, 5, 5, 3, 4, 12, 18, 21, 22, 23, 25, 29, 33, 36, 38, 39, 41, 43, 43, 44, 45, 47, 48, 49, 50, 50, 51, 52, 53, 55, 55, 56, 56, 57, 58, 58, 58, 57, 56, 56, 55, 55, 56, 56, 56, 55, 53, 51, 49, 44, 41, 37, 33, 32, 31, 31, 30, 30, 29, 29, 27, 26, 21, 17, 11, 7, 1, -3, -6, -8, -9, -12, -15, -19, -17, -17, -17, -20, -26, -39, -48, -49]
-    readings_ex1_np = np.array(readings_ex1)
-    readings_ex2_np = np.array(readings_ex2)
-    # max_1 = np.argmax(readings_ex1_np)
-    # max_2 = np.argmax(readings_ex2_np)
-    readings_ex1_np -= np.max(readings_ex1_np)#readings_ex1_np[max_1]
-    readings_ex2_np -= np.max(readings_ex2_np)#readings_ex2_np[max_2]
-    readings_ex1 = list(readings_ex1_np)
-    readings_ex2 = list(readings_ex2_np)
-    x = [num for num in range(0, len(readings_ex1), 1)]
-    x_2 = [num for num in range(0, len(readings_ex2), 1)]
-    plt.xlabel('Angel in (degree)')
-    plt.ylabel('Magnitude in (dB)')
-    plt.plot(x, readings_ex1,marker="o")
-    plt.plot(x_2, readings_ex2,marker="o")
-    plt.legend(["2 spacers", "1 spacer"])
-    plt.grid(True)
-    plt.suptitle('Beam Pattern', fontsize=25)
-    plt.show()
+
 def calibiration_seen ():
     global readings, distances
     moveMotor(Motors.LOWER.value, ((maxStepsOfLower*scanningLowerStepSize)/2), Direction.NEGATIVE.value)
@@ -383,158 +266,243 @@ def calibiration_seen ():
     readings = []
     distances = []
     return max_db
-i=1
-j=1
-# if __name__ == "__main__":
-#     arduino = set_up()
-#     # max_db = calibiration_seen ()
-#     # print ("MAX_dB = ",max_db)
-#     exp_number=6
-#     file = open("Experements.txt", "a")
-#     n = 2
-#     fig, ax = plt.subplots(nrows=n, ncols=2)
-#     if (n == 1):
-#         # scan2D_lower(True,0)
-#         scan2D_lower(False,max_db)
-#         x = [num*scanningLowerStepSize*stepAngle for num in range(0, len(readings), 1)]
-#         x_2 = [num*scanningLowerStepSize*stepAngle for num in range(0, len(distances), 1)]
-#         plt.subplot(211)
-#         plt.plot(x, readings,marker="o")
-#         plt.xlabel('Angel in (degree)')
-#         plt.ylabel('Magnitude in (dB)')
-#         plt.grid(True)
-#         plt.subplot(212)
-#         plt.plot(x_2, distances,marker="o")
-#         plt.xlabel('Angel in (degree)')
-#         plt.ylabel('distance in (mm)')
-#         plt.grid(True)
-#         plt.suptitle('Beam Pattern', fontsize=25)
-#     else:
-#         for i in range(n):
-#             # scan2D_lower(False, max_db)
-#             scan2D_lower(True,0)
-#             x = [num*scanningLowerStepSize*stepAngle for num in range(0, len(readings), 1)]
-#             x_2 = [num*scanningLowerStepSize*stepAngle for num in range(0, len(distances), 1)]
-#             ax[i][0].set_xlabel('Angel in (degree)')
-#             ax[i][0].set_ylabel('Distance in (mm)')
-#             ax[i][0].grid(True)
-#             ax[i][0].plot(x_2, distances,marker="o")
-#             ax[i][1].set_xlabel('Angel in (degree)')
-#             ax[i][1].set_ylabel('Magnitude in (dB)')
-#             ax[i][1].grid(True)
-#             ax[i][1].plot(x, readings,marker="o")
-#             file.write("Experement number ::"+str(i)+"\n") 
-#             file.write(str(readings)+"\n") 
-#             file.write(str(distances)+"\n")
-#             distances = []
-#             readings = []
-#             #plot1 = plt.figure(1)
-#             # moveMotor(Motors.UPPER.value, scanningUpperStepSize, Direction.NEGATIVE.value)   
-#     # moveMotor(Motors.UPPER.value, scanningUpperStepSize*n, Direction.POSITIVE.value)
-#     # fig.suptitle('Exp', fontsize=16)
-#     plt.show()  
-#     file.write("########################################################################################\n")  
-#     file.close()
 
-if __name__ == "__main__":
-    i = "ezzat body"
-    arduino = set_up()
-    file = open("Experements_3D.txt", "a")
+def save_3d_experenemt(x,y,z,name):
+    file = open("3D_Experements/"+name+"_x.txt", "a")
+    np.savetxt(file, x)
+    file.close()
+
+    file = open("3D_Experements/"+name+"_y.txt", "a")
+    np.savetxt(file, y)
+    file.close()
+
+    file = open("3D_Experements/"+name+"_z.txt", "a")
+    np.savetxt(file, z)
+    file.close()
+
+def save_dist_mag_experenemt(mag,dist,name):
+    file = open("DM_Experements/"+name+"_mag.txt", "a")
+    np.savetxt(file, mag)
+    file.close()
+
+    file = open("3D_Experements/"+name+"_dist.txt", "a")
+    np.savetxt(file, dist)
+    file.close()
+
+
+def _3D_mapping(exp_name):
+
+    ##
     max_db = calibiration_seen ()
     print ("MAX_dB = ",max_db)
+
+    ##
     moveMotor(Motors.LOWER.value, ((maxStepsOfLower*scanningLowerStepSize)/2), Direction.NEGATIVE.value)
     dist,uAngel,lAngel = scanFace(max_db)
     moveMotor(Motors.LOWER.value, ((maxStepsOfLower*scanningLowerStepSize)/2), Direction.NEGATIVE.value)
+
+    ##
     x , y , z = np.array(dist)*np.cos(uAngel)*np.sin(lAngel) , np.array(dist)*np.cos(uAngel)*np.cos(lAngel) , np.array(dist)*np.sin(uAngel)
     my_sample_x = np.array(x)
     my_sample_y = np.array(y)
     my_sample_z = np.array(z)
-    file.write("Experement number ::"+str(i)+"\n") 
-    file.write(str(my_sample_x)+"\n") 
-    file.write(str(my_sample_y)+"\n")
-    file.write(str(my_sample_z)+"\n")
-    file.write("########################################################################################\n")  
-    file.close()
-    cat_g = ['Object Point']
-    sample_cat = [cat_g[np.random.randint(0,1)] for i in range (len(my_sample_z))]
+
+    ##
+    save_3d_experenemt(my_sample_x,my_sample_y,my_sample_z,exp_name)
+
+    ##
+    max_y = np.amax(my_sample_y)
+    min_y = np.amin(my_sample_y)
     df = pd.DataFrame(my_sample_x,columns=['X (mm)'])
     df['Y (mm)'] = my_sample_y
     df['Z (mm)'] = my_sample_z
-    df['Color'] = sample_cat
+    df['Depth'] = my_sample_y
+    color = px.colors.sequential.Rainbow[::-1]
     df.head()
-    fig = px.scatter_3d(df, x='X (mm)', y='Y (mm)', z='Z (mm)',
-            color='Color', title="3D Model")
+    fig = px.scatter_3d(df, x='X (mm)', y='Y (mm)', z='Z (mm)', color='Depth', title="ٌRadar Point Cloud" , range_color=[max_y,min_y],color_continuous_scale=color)
     fig.show()
-    #####################3
-    # plt.xlabel('x')
-    # plt.ylabel('y')
-    # plt.show()
-    # setting upp arduino ports
+
+ 
+def _mag_dist_mapping(exp_name,scaning_number = 2 ,increase_upper_angel = False):
+
+    max_db = calibiration_seen ()
+    print ("MAX_dB = ",max_db)
+
+    fig, ax = plt.subplots(nrows=scaning_number, ncols=2)
+    
+    if (scaning_number == 1):
+        # scan2D_lower(True,0)
+        scan2D_lower(False,max_db)
+        x = [num*scanningLowerStepSize*stepAngle for num in range(0, len(readings), 1)]
+        x_2 = [num*scanningLowerStepSize*stepAngle for num in range(0, len(distances), 1)]
+        plt.subplot(211)
+        plt.plot(x, readings,marker="o")
+        plt.xlabel('Angel in (degree)')
+        plt.ylabel('Magnitude in (dB)')
+        plt.grid(True)
+        plt.subplot(212)
+        plt.plot(x_2, distances,marker="o")
+        plt.xlabel('Angel in (degree)')
+        plt.ylabel('distance in (mm)')
+        plt.grid(True)
+        plt.suptitle('Beam Pattern', fontsize=25)
+    else:
+        for i in range(scaning_number):
+            # scan2D_lower(False, max_db)
+            scan2D_lower(True,0)
+            x = [num*scanningLowerStepSize*stepAngle for num in range(0, len(readings), 1)]
+            x_2 = [num*scanningLowerStepSize*stepAngle for num in range(0, len(distances), 1)]
+            ax[i][0].set_xlabel('Angel in (degree)')
+            ax[i][0].set_ylabel('Distance in (mm)')
+            ax[i][0].grid(True)
+            ax[i][0].plot(x_2, distances,marker="o")
+            ax[i][1].set_xlabel('Angel in (degree)')
+            ax[i][1].set_ylabel('Magnitude in (dB)')
+            ax[i][1].grid(True)
+            ax[i][1].plot(x, readings,marker="o")
+            save_dist_mag_experenemt(readings,distances,exp_name+"_"+str(i))
+            distances = []
+            readings = []
+
+            if increase_upper_angel:
+                moveMotor(Motors.UPPER.value, scanningUpperStepSize, Direction.NEGATIVE.value)
+
+    if increase_upper_angel == True:   
+        moveMotor(Motors.UPPER.value, scanningUpperStepSize*scaning_number, Direction.POSITIVE.value)
+    
+    plt.show()  
+
+
+if __name__ == "__main__":
+
+    radar = Radar()
+    arduino = set_up()
+    # radar.setup_radar()
+    # radar.setup_radar_system_configuration()
+    # radar.setup_radar_pll_configuration()
+    # radar.setup_radar_baseband_configuration()
+    ##########################
     # context = zmq.Context()
     # socket = context.socket(zmq.PUB)
     # socket.bind("tcp://*:%s" % port)
     # t1 = Thread(target=get_readings_thread,daemon=True)
     # t1.start()
     # t1.join()
+
     # move_with_keyboard ()
-    #2d scanning
-    ####################################################3
-    # x , y = scan2D_lower()
-    # print(x)
-    # print(y)
-    # plt.plot(x, y)
-    # plt.xlabel('x')
-    # plt.ylabel('y')
-    # plt.show()
-    ########################################################
-##################################################################################3333333333
+    _3D_mapping("corner")
+    #_mag_dist_mapping("corner")
 
 
 
 
-    # moves the sensor in lower direction (XY plane) until the face is found
-    
-#     # lowerDirection = calibrateLower()
-#     lowerDirection = 1
-#     dist = []
-#     uAngel =[]
-#     lAngel = []
-#     if(lowerDirection is None):
-#         moveMotor(Motors.LOWER.value, maxStepsOfLower,
+
+
+#######################################unwanted_for_now#######################################
+# """
+# if face was found return the direction of the lower motor 
+# else return none
+# """
+# def calibrateLower():    
+#     detect = False
+#     count = 0
+#     # looping until face is found or rotated 90 degrees to the right
+#     while(count < calibrateLowerTotalStepsCount):
+#         moveMotor(Motors.LOWER.value, calibrateLowerStepSize,
 #                   Direction.POSITIVE.value)
-#     else:
-#         dist,uAngel,lAngel = scanFace(lowerDirection)
-#         # print (dist,uAngel,lAngel)
-#         x , y , z = np.array(dist)*np.cos(uAngel)*np.sin(lAngel) , np.array(dist)*np.cos(uAngel)*np.cos(lAngel) , np.array(dist)*np.sin(uAngel)
-#         # print(x)
-#         # print(y)
-#         # print(z)
+#         count += 1
+#         result = radar.get_median_distance(1) 
+#         if result != -1:
+#             detect = True
+                 
+#         if(detect):
+#             return Direction.POSITIVE.value  # return that a face is found when rotating right
+#     moveMotor(Motors.LOWER.value, calibrateLowerStepSize *
+#               calibrateLowerTotalStepsCount, Direction.NEGATIVE.value)
+#     count = 0
+#     # looping until face is found or rotated 90 degrees to the left
+#     while(not detect and count > -1 * calibrateLowerTotalStepsCount):
+#         moveMotor(Motors.LOWER.value, calibrateLowerStepSize,
+#                   Direction.NEGATIVE.value)
+#         count -= 1
+#         result = radar.get_median_distance(1) 
+#         if result != -1:
+#             detect = True
+#         if(detect):
+#             return Direction.NEGATIVE.value  # return that a face is found when rotating left
+#     return None
 
-#         my_sample_x = np.array(x)
-#         my_sample_y = np.array(y)
-#         my_sample_z = np.array(z)
-        
-#         print ("size of the my_sample_x before drawing :: ",len(my_sample_x))
-#         print ("size of the my_sample_y before drawing :: ",len(my_sample_y))
-#         print ("size of the my_sample_z before drawing :: ",len(my_sample_z))
-# #         fig = plt.figure()
-# #         ax = fig.add_subplot(111,projection="3d")
-# #         ax.scatter (my_sample_x,my_sample_y, my_sample_z, s=5, c="r", marker = 'o')
-# #         ax.set_xlabel("X")
-# #         ax.set_ylabel("Y")
-# #         ax.set_zlabel("Z")
-# # #         ax.set_xlim(-100, 100)
-# # #         ax.set_ylim(-100, 100)
-# # #         ax.set_zlim(-100, 100)
-# #         plt.show()
-#         cat_g = ['setosa']
-#         sample_cat = [cat_g[np.random.randint(0,1)] for i in range (len(my_sample_z))]
 
-#         df = pd.DataFrame(my_sample_x,columns=['sepal_length'])
-#         df['sepal_width'] = my_sample_y
-#         df['petal_width'] = my_sample_z
-#         df['species'] = sample_cat
-#         df.head()
-#         fig = px.scatter_3d(df, x='sepal_length', y='sepal_width', z='petal_width',
-#                 color='species')
-#         fig.show()
+# def scan2D_upper():
+#     global global_distance
+    
+#     uCounter = 0
+    
+#     xResult = []
+#     yResult = []
+
+    
+#     while(uCounter < maxStepsOfUpper):
+#         distance = global_distance
+#         print("##############scan2D###############")
+#         print("distance = ",distance)
+#         print("lCounter = ",uCounter)
+#         print("######################################")
+#         if (distance != -1 and distance != None):
+#             yResult.append(distance)
+#             xResult.append((uCounter * scanningUpperStepSize))
+
+#         else:
+#             yResult.append(0)
+#             xResult.append((uCounter * scanningUpperStepSize))
+
+#         moveMotor(Motors.UPPER.value, scanningUpperStepSize, Direction.POSITIVE.value)
+#         uCounter += 1
+
+#     moveMotor(Motors.UPPER.value, scanningUpperStepSize * maxStepsOfUpper, Direction.NEGATIVE.value)
+#     return xResult,yResult
+
+
+# def distance_drawing():
+#     readings = [-94, -94, -98, -100, -103, -102, -103, -102, -103, -99, -103, -99, -99, -100, -100, -100, -95, -100, -97, -97, -99, -99, -93, -93, -93, -97, -93, -89, -87, -85, -86, -85, -84, -91, -97, -99, -96, -96, -93, -93, -96, -96, -89, -83, -75, -74, -77, -84, -93, -96, -87, -83, -81, -80, -80, -81, -86, -87, -75, -64, -57, -50, -45, -43, -42, -40, -39, -38, -36, -34, -31, -28, -25, -22, -21, -19, -19, -18, -16, -11, -7, 0, 4, 6, 8, 9, 9, 8, 5, 2, -8, -11, -24, -29, -29, -20, -19, -13, -11, -12, -13, -16, -19, -20, -21, -20, -21, -24, -27, -33, -40, -44, -47, -47, -46, -47, -48, -53, -67, -72, -72, -69, -68, -68, -70, -74, -87, -81, -66, -75, -72, -70, -60, -79, -77, -85, -85, -90, -88, -91, -96, -96, -92, -91, -91, -90, -91, -90, -93, -91]
+#     readings_np = np.array(readings)
+#     distance = [792, 788, 788, 796, 756, 608, 764, 796, 604, 796, 772, 768, 776, 756, 768, 776, 784, 776, 780, 780, 784, 796, 796, 796, 796, 796, 796, 796, 796, 796, 796, 796, 796, 796, 504, 512, 520, 796, 796, 796, 796, 796, 796, 796, 796, 796, 796, 796, 796, 772, 780, 792, 796, 796, 796, 796, 796, 764, 796, 796, 796, 796, 796, 796, 796, 796, 796, 796, 796, 796, 792, 792, 792, 784, 788, 788, 788, 784, 780, 784, 780, 784, 780, 780, 780, 780, 780, 784, 780, 780, 784, 784, 784, 792, 784, 788, 788, 784, 784, 784, 788, 784, 784, 784, 788, 792, 792, 788, 792, 792, 792, 792, 796, 796, 796, 796, 796, 796, 796, 768, 768, 780, 784, 784, 780, 780, 776, 796, 796, 792, 788, 796, 792, 788, 788, 776, 776, 796, 796, 796, 796, 768, 776, 768, 768, 776, 780, 784, 780, 780]
+#     counter = 0
+#     flag = 1
+#     for i in range (len(distance)):  
+#         angel = ((counter * 0.45*np.pi)/180)
+#         distance[i] = distance[i] * np.cos(angel)
+#         if (readings_np[i]/np.max(readings_np)) == 1:
+#             flag = -1
+#         counter += flag
+
+#     x = [num for num in range(0, len(distance), 1)]
+#     plt.xlabel('Step')
+#     plt.ylabel('Distance in (mm)')
+#     plt.plot(x, distance,marker="o")
+#     plt.grid(True)
+#     plt.suptitle('Distance', fontsize=25)
+#     plt.show()
+
+# def beam_pattern ():
+#     readings_ex1 = [-30, -32, -34, -33, -25, -21, -18, -17, -16, -15, -12, -7, -7, -8, -14, -18, -13, -9, -9, -18, -24, -27, -9, -10, -16, -16, -5, 0, 2, 3, 10, 15, 18, 21, 19, 17, 22, 30, 38, 45, 48, 49, 55, 58, 60, 63, 64, 63, 62, 60, 57, 52, 45, 41, 38, 35, 26, 16, 6, 13, 15, 15, 10, 4, 3, -8, -14, -17, -10, -8, -8, -14, -15, -20, -19, -23, -28, -23, -17, -7, -4, -5, -16, -19, -25, -33, -36, -46, -38, -31, -33, -35, -33, -24, -20, -19, -28, -37, -41, -43]
+#     readings_ex2 = [-38, -38, -34, -28, -23, -20, -17, -17, -20, -22, -24, -20, -8, -5, -4, 0, 0, 2, 5, 5, 5, 3, 4, 12, 18, 21, 22, 23, 25, 29, 33, 36, 38, 39, 41, 43, 43, 44, 45, 47, 48, 49, 50, 50, 51, 52, 53, 55, 55, 56, 56, 57, 58, 58, 58, 57, 56, 56, 55, 55, 56, 56, 56, 55, 53, 51, 49, 44, 41, 37, 33, 32, 31, 31, 30, 30, 29, 29, 27, 26, 21, 17, 11, 7, 1, -3, -6, -8, -9, -12, -15, -19, -17, -17, -17, -20, -26, -39, -48, -49]
+#     readings_ex1_np = np.array(readings_ex1)
+#     readings_ex2_np = np.array(readings_ex2)
+#     # max_1 = np.argmax(readings_ex1_np)
+#     # max_2 = np.argmax(readings_ex2_np)
+#     readings_ex1_np -= np.max(readings_ex1_np)#readings_ex1_np[max_1]
+#     readings_ex2_np -= np.max(readings_ex2_np)#readings_ex2_np[max_2]
+#     readings_ex1 = list(readings_ex1_np)
+#     readings_ex2 = list(readings_ex2_np)
+#     x = [num for num in range(0, len(readings_ex1), 1)]
+#     x_2 = [num for num in range(0, len(readings_ex2), 1)]
+#     plt.xlabel('Angel in (degree)')
+#     plt.ylabel('Magnitude in (dB)')
+#     plt.plot(x, readings_ex1,marker="o")
+#     plt.plot(x_2, readings_ex2,marker="o")
+#     plt.legend(["2 spacers", "1 spacer"])
+#     plt.grid(True)
+#     plt.suptitle('Beam Pattern', fontsize=25)
+#     plt.show()
+#####################################################################################################################
