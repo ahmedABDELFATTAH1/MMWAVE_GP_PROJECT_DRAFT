@@ -16,17 +16,22 @@ calibrateLowerStepSize = 10
 calibrateLowerTotalStepsCount = 20
 
 counter_depth_get_dist_mag = 0
-max_depth = 10
+
 global_counter = 0
-motors_delay  = 0
+
 readings = []
 distances = []
+
 
 configuration_file = open('configuration.json',)
 configuration_json = json.load(configuration_file)
 arduino_port = configuration_json["ARDUINO_PORT"]
 port = configuration_json["PORT"]
+max_depth = configuration_json["MAX_DEPTH"]
 
+
+
+motors_delay  = configuration_json["MOTORS_DELAY"]
 stepAngle = configuration_json["STEP_ANGLE"]
 
 scanningLowerStepSize = configuration_json["LOWER_STEP_SIZE"]

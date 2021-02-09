@@ -10,6 +10,7 @@
     "THRESHOLD":0.4,
     "BAUD_RATE":1000000,
     "PORT" : "5556",
+    "MAX_DEPTH":5, 
     "RANGE_OF_INTEREST":{
         "MIN_DISTANCE":500,
         "MAX_DISTANCE":1300
@@ -30,6 +31,7 @@
     "UPPER_STEP_SIZE":4,
     "MAX_ANGLE_UPPER":45,
     "MAX_ANGLE_LOWER":67.5,
+    "MOTORS_DELAY":0,
 
     "_comment_radar": "Radar config section .....",
     "SYS_CONFIG":{
