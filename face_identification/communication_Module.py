@@ -126,7 +126,7 @@ def scanFace(max_db):
     upperDirection = True
     moveU = True
     moveL = True
-    uCounter = Direction.POSITIVE.value * ((maxStepsOfUpper*scanningUpperStepSize)/2)
+    uCounter = Direction.NEGATIVE.value * ((maxStepsOfUpper*scanningUpperStepSize)/2)
     lCounter = Direction.NEGATIVE.value * ((maxStepsOfLower*scanningLowerStepSize)/2)
     moveMotor(Motors.LOWER.value, ((maxStepsOfLower*scanningLowerStepSize)/2), Direction.NEGATIVE.value)
     moveMotor(Motors.UPPER.value, ((maxStepsOfUpper*scanningUpperStepSize)/2), Direction.POSITIVE.value)
@@ -408,7 +408,7 @@ if __name__ == "__main__":
     # t1.join()
 
     # move_with_keyboard ()
-    _3D_mapping("corner")
+    _3D_mapping("waleed_face")
     #_mag_dist_mapping("corner")
 
 
