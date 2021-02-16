@@ -191,8 +191,8 @@ def get_reading_message():
     consumer_receiver.connect("tcp://127.0.0.1:5558")
     frame = consumer_receiver.recv_json()
     consumer_receiver.close()    
-    print(len(frame))
-    return frame 
+    print(len(frame["FRAME"]))    
+    return frame["FRAME"]
 def get_dist_mag(calibiration_mode, max_db):
     global readings, global_counter, counter_depth_get_dist_mag, max_depth
     frame = get_reading_message()
@@ -402,7 +402,7 @@ if __name__ == "__main__":
     # t1.join()
 
     # move_with_keyboard ()
-    _3D_mapping("waleed_face")
+    _3D_mapping("waleed_face1")
     #_mag_dist_mapping("corner")
 
 

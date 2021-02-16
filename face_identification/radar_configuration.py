@@ -282,6 +282,7 @@ class Radar():
         
 
     def detect_peaks(self,frame, calibiration_mode, max_db):
+        
         """
         Detect peaks with CFAR algorithm.
 
