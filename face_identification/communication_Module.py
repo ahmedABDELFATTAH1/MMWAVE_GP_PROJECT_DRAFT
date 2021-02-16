@@ -119,13 +119,17 @@ def moveMotor(motor: Motors, stepSize, direction: Direction):
     time.sleep(motors_delay)
     arduino.readline()
 
-
+"""
+3d scanning for the object in front of the radar , radar should be directed to the lower left of the object
+"""
 def scanFace(max_db):
     upperDirection = True
     moveU = True
     moveL = True
-    uCounter = 0
+    uCounter = Direction.POSITIVE.value * ((maxStepsOfUpper*scanningUpperStepSize)/2)
     lCounter = Direction.NEGATIVE.value * ((maxStepsOfLower*scanningLowerStepSize)/2)
+    moveMotor(Motors.LOWER.value, ((maxStepsOfLower*scanningLowerStepSize)/2), Direction.NEGATIVE.value)
+    moveMotor(Motors.UPPER.value, ((maxStepsOfUpper*scanningUpperStepSize)/2), Direction.POSITIVE.value)
     count = 0
     count_lower_end = 0
     dResult =[]
@@ -144,36 +148,41 @@ def scanFace(max_db):
             print("######################################")
             if (distance != -1):
                 dResult.append(distance)
-                uResult.append((uCounter * 0.45*np.pi)/180)
-                lResult.append((lCounter * 0.45*np.pi)/180)
-            if(upperDirection):
+                uResult.append((uCounter * 0.45*np.pi)/180) # getting upper angle in radian
+                lResult.append((lCounter * 0.45*np.pi)/180) # getting lower angle in radian
+            if(upperDirection): # if my direction is upper i will move up 1 step
                 moveMotor(Motors.UPPER.value, scanningUpperStepSize,
                           Direction.NEGATIVE.value)
                 uCounter += scanningUpperStepSize
                 count+=1
-            else:
+            else: # else I will move down 1 step
                 moveMotor(Motors.UPPER.value, scanningUpperStepSize,
                           Direction.POSITIVE.value)
                 uCounter -= scanningUpperStepSize
                 count+=1
-            if count >= maxStepsOfUpper:
-                moveU = False
+            if count >= maxStepsOfUpper: #We have finished scanning 1 column , time to move to the next column
+                moveU = False #to exit loop
                 count = 0
             previous_distance = distance
-        moveU = True
-        upperDirection = not upperDirection
+        moveU = True  #to enter the next column
+        upperDirection = not upperDirection #toggle direction of upper motor
         index,distance,db_frame = get_dist_mag(False, max_db)
         # distance = error_correction(previous_distance , distance)
         if (distance != -1):
             dResult.append(distance)
             uResult.append((uCounter * 0.45*np.pi)/180)
             lResult.append((lCounter * 0.45*np.pi)/180)
-        moveMotor(Motors.LOWER.value, scanningLowerStepSize, Direction.POSITIVE.value)
+        moveMotor(Motors.LOWER.value, scanningLowerStepSize, Direction.POSITIVE.value) #moving lower motor 1 step 
         lCounter += (scanningLowerStepSize*Direction.POSITIVE.value)
         count_lower_end += 1
-        if count_lower_end >= maxStepsOfLower:
-            moveL = False
+        if count_lower_end >= maxStepsOfLower: #quitting scan if we have reached maximum steps of lower motor
+            moveL = False 
         previous_distance = distance
+    moveMotor(Motors.LOWER.value, ((maxStepsOfLower*scanningLowerStepSize)/2), Direction.NEGATIVE.value)
+    if (upperDirection):
+        moveMotor(Motors.UPPER.value, ((maxStepsOfUpper*scanningUpperStepSize)/2), Direction.NEGATIVE.value)
+    else:
+        moveMotor(Motors.UPPER.value, ((maxStepsOfUpper*scanningUpperStepSize)/2), Direction.POSITIVE.value)
     return dResult,uResult,lResult
 
 def get_dist_mag(calibiration_mode, max_db):
@@ -261,18 +270,21 @@ def move_with_keyboard ():
             moveMotor(Motors.UPPER.value, scanningUpperStepSize, Direction.POSITIVE.value)
 
 
-def calibiration_seen ():
-    global readings, distances
-    moveMotor(Motors.LOWER.value, ((maxStepsOfLower*scanningLowerStepSize)/2), Direction.NEGATIVE.value)
-    scan2D_lower(True,0)
-    moveMotor(Motors.LOWER.value, ((maxStepsOfLower*scanningLowerStepSize)/2), Direction.POSITIVE.value)
-    readings_np = np.array(readings)
-    max_db = np.max(readings_np)
+"""
+getting the max db in the scence by doing a 2d scan
+"""
+def calibrate_scene():
+    global readings, distances  # list of db(y) , distance(x)
+    moveMotor(Motors.LOWER.value, ((maxStepsOfLower*scanningLowerStepSize)/2), Direction.NEGATIVE.value) #move from center of the object to the beginning of the object
+    scan2D_lower(True,0) # scan 2d 
+    moveMotor(Motors.LOWER.value, ((maxStepsOfLower*scanningLowerStepSize)/2), Direction.POSITIVE.value) #move back to the center
+    readings_np = np.array(readings) 
+    max_db = np.max(readings_np) # getting max db
     readings = []
     distances = []
     return max_db
 
-def save_3d_experenemt(x,y,z,name):
+def save_3d_experement(x,y,z,name):
     file = open("3D_Experements/"+name+"_x.txt", "a")
     np.savetxt(file, x)
     file.close()
@@ -297,25 +309,26 @@ def save_dist_mag_experenemt(mag,dist,name):
 
 def _3D_mapping(exp_name):
 
-    ##
-    max_db = calibiration_seen ()
+    ##gets the maximum peak of db in the scene to estimate average value of db to eliminate noise
+    #radar starts at the middle of the object , and after finishing returns back to the original point (middle of the object)
+    max_db = calibrate_scene()  
     print ("MAX_dB = ",max_db)
 
-    ##
-    moveMotor(Motors.LOWER.value, ((maxStepsOfLower*scanningLowerStepSize)/2), Direction.NEGATIVE.value)
+    ##moving the radar to the left (or right) with number of steps of scanning / 2
+    #then make a 3d scan
+    #then return back to the center of the object
     dist,uAngel,lAngel = scanFace(max_db)
-    moveMotor(Motors.LOWER.value, ((maxStepsOfLower*scanningLowerStepSize)/2), Direction.NEGATIVE.value)
 
-    ##
+    ## getting the x , y , z axis of the points read by the radar
     x , y , z = np.array(dist)*np.cos(uAngel)*np.sin(lAngel) , np.array(dist)*np.cos(uAngel)*np.cos(lAngel) , np.array(dist)*np.sin(uAngel)
     my_sample_x = np.array(x)
     my_sample_y = np.array(y)
     my_sample_z = np.array(z)
 
-    ##
-    save_3d_experenemt(my_sample_x,my_sample_y,my_sample_z,exp_name)
+    ##saving the x , y ,z points  in an external file
+    save_3d_experement(my_sample_x,my_sample_y,my_sample_z,exp_name)
 
-    ##
+    ##getting the min and max to estimate the depth of colors , then drawing the points
     max_y = np.amax(my_sample_y)
     min_y = np.amin(my_sample_y)
     df = pd.DataFrame(my_sample_x,columns=['X (mm)'])
@@ -330,7 +343,7 @@ def _3D_mapping(exp_name):
  
 def _mag_dist_mapping(exp_name,scaning_number = 2 ,increase_upper_angel = False):
 
-    max_db = calibiration_seen ()
+    max_db = calibrate_scene ()
     print ("MAX_dB = ",max_db)
 
     fig, ax = plt.subplots(nrows=scaning_number, ncols=2)
