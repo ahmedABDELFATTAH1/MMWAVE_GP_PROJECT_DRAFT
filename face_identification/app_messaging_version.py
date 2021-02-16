@@ -51,11 +51,10 @@ def update_2d_graph(y, index, bin_resolution):
 
     return px.scatter(df, x="x", y="y", color="color")
 
-
 # fig = px.scatter(df, x="x", y="y", color="fruit", custom_data=["customdata"])
-# fig = update_2d_graph(np.random.uniform(low=0.5, high=13.3, size=(50,)), 1, 1)
-fig = update_2d_graph(global_reading, global_index, 1)
+fig = update_2d_graph(np.random.uniform(low=0.5, high=13.3, size=(50,)), 1, 1)
 fig.data[0].update(mode='markers')
+#fig = update_2d_graph(global_reading, global_index, 1)
 
 
 colors = {
@@ -103,7 +102,7 @@ app.layout = html.Div(children=[
     }),
     dcc.Interval(
         id='graph-update',
-        interval=1000,
+        interval=500,
         n_intervals=1
     ),
     html.Div(style={
@@ -120,36 +119,32 @@ app.layout = html.Div(children=[
 
 ], style=body)
 
+def get_reading_message(): 
+    context = zmq.Context()
+    consumer_receiver = context.socket(zmq.SUB)
+    consumer_receiver.setsockopt_string(zmq.SUBSCRIBE, "")    
+    consumer_receiver.connect("tcp://127.0.0.1:5558")
+    frame = consumer_receiver.recv_json()
+    consumer_receiver.close()    
+    print(len(frame))
+    return frame 
 
 @app.callback(
     Output(component_id='live-graph', component_property='figure'),
     [Input('graph-update', 'n_intervals')]
 )
-def update_graph_scatter(n):
-    global global_reading, global_index
-    try:
-        [topic,msg,idx] = socket.recv_multipart()
-        global_reading = pickle.loads(msg)
-        global_index = pickle.loads(idx)
-        print ("index = ",global_index)
-        fig = update_2d_graph(global_reading, global_index, 1)
-        fig.data[0].update(mode='lines+markers')
-        fig.update_layout(uirevision="foo")
-        return fig
-    except:
-        print ("expected 3 and got 2")
-        fig = update_2d_graph(global_reading, global_index, 1)
-        fig.data[0].update(mode='lines+markers')
-        fig.update_layout(uirevision="foo")
-        return fig
-    
-    
-if __name__ == '__main__':
-    context = zmq.Context()
-    socket = context.socket(zmq.SUB)
 
-    print ("Collecting updates from weather server...")
-    socket.connect ("tcp://localhost:%s" % port)
-    socket.setsockopt_string(zmq.SUBSCRIBE, 'status')
-    app.run_server(debug=True)
+def update_graph_scatter(n):    
+    frame = get_reading_message()  
+    frame = frame["FRAME"] 
+    global_index = -1 
+    fig = update_2d_graph(frame, global_index, 1)
+    fig.data[0].update(mode='lines+markers')
+    fig.update_layout(uirevision="foo")
+    return fig
+    
+    
+    
+if __name__ == '__main__':   
+    app.run_server()
     
