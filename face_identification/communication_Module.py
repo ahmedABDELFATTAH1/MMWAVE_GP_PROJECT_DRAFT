@@ -175,7 +175,7 @@ def scanFace(max_db):
         moveMotor(Motors.LOWER.value, scanningLowerStepSize, Direction.POSITIVE.value) #moving lower motor 1 step 
         lCounter += (scanningLowerStepSize*Direction.POSITIVE.value)
         count_lower_end += 1
-        if count_lower_end >= maxStepsOfLower: #quitting scan if we have reached maximum steps of lower motor
+        if count_lower_end > maxStepsOfLower: #quitting scan if we have reached maximum steps of lower motor
             moveL = False 
         previous_distance = distance
     moveMotor(Motors.LOWER.value, ((maxStepsOfLower*scanningLowerStepSize)/2), Direction.NEGATIVE.value)
@@ -315,12 +315,15 @@ def _3D_mapping(exp_name):
 
     ## getting the x , y , z axis of the points read by the radar
     x , y , z = np.array(dist)*np.cos(uAngel)*np.sin(lAngel) , np.array(dist)*np.cos(uAngel)*np.cos(lAngel) , np.array(dist)*np.sin(uAngel)
+    print("cos ")
     my_sample_x = np.array(x)
     my_sample_y = np.array(y)
     my_sample_z = np.array(z)
 
     ##saving the x , y ,z points  in an external file
-    save_3d_experement(my_sample_x,my_sample_y,my_sample_z,exp_name)
+    #save_3d_experement(my_sample_x,my_sample_y,my_sample_z,exp_name)
+
+    save_3d_experement(np.array(dist),np.array(uAngel),np.array(lAngel),exp_name)
 
     ##getting the min and max to estimate the depth of colors , then drawing the points
     max_y = np.amax(my_sample_y)
@@ -402,7 +405,8 @@ if __name__ == "__main__":
     # t1.join()
 
     # move_with_keyboard ()
-    _3D_mapping("waleed_face1")
+    file_name = input("enter experment name")
+    _3D_mapping(file_name)
     #_mag_dist_mapping("corner")
 
 
