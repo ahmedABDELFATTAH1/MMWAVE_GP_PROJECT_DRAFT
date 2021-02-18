@@ -55,19 +55,18 @@ void loop()
     if(data != -1 && data != 10)
       dataString = dataString+(char)data;
     }while(data !=36);
-    Serial.println(dataString);
-//    Serial.println(dataString);
+    
     if (dataString[0] == 'l')
     {
       int movement = dataString.substring(1,dataString.length()-1).toInt();
       move_lower_motor(movement);
-      //Serial.println(movement);
+      Serial.println(movement);
     }
     else if  (dataString[0] == 'u')
     {
       int movement = dataString.substring(1,dataString.length()-1).toInt();
       move_upper_motor(movement);
-      //Serial.println(movement);
+      Serial.println(movement);
     }
     else
     {
