@@ -71,7 +71,7 @@ void loop()
     }
     else
     {
-      Serial.println("you are donkey");
+      Serial.println("Error: invalid command");
     }
   }
 }

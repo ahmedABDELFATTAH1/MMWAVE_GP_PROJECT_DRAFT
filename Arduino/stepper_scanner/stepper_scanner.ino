@@ -83,7 +83,7 @@ void setup()
 
 void loop()
 { 
-  home_H();
+  move_horizontal();
 
   //back to origin
   V_motor.moveTo(0);
@@ -104,14 +104,14 @@ read the data in tsv mode
 
 
 */
-void home_H() {
+void move_horizontal() {
   
     //H_motor.setCurrentPosition(0);
     float scaler = 2 * H_direction;   //to increase the step size
     float final_pofloat = max_H_steps * H_direction/2 ;
     long current_position = H_motor.currentPosition();
     while (current_position != final_pofloat) { // run until it reaches the distance value
-     home_V();
+     move_vertical();
      //H_motor.setSpeed(H_direction * H_speed);
      H_motor.moveTo(current_position+scaler);
      //H_motor.runSpeed();
@@ -122,7 +122,7 @@ void home_H() {
 
 }
 
-void home_V() {
+void move_vertical() {
 //  V_motor.setCurrentPosition(0);
 //  float final_pofloat = + * V_direction;
   long current_position = V_motor.currentPosition();
