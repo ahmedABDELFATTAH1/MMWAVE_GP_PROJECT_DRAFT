@@ -115,7 +115,7 @@ def scanFace(max_db):
     upperDirection = True
     moveU = True
     moveL = True
-    uCounter = Direction.POSITIVE.value * ((maxStepsOfUpper*scanningUpperStepSize)/2)
+    uCounter = Direction.NEGATIVE.value * ((maxStepsOfUpper*scanningUpperStepSize)/2)
     lCounter = Direction.NEGATIVE.value * ((maxStepsOfLower*scanningLowerStepSize)/2)
     moveMotor(Motors.LOWER.value, ((maxStepsOfLower*scanningLowerStepSize)/2), Direction.NEGATIVE.value)
     moveMotor(Motors.UPPER.value, ((maxStepsOfUpper*scanningUpperStepSize)/2), Direction.POSITIVE.value)
@@ -164,7 +164,7 @@ def scanFace(max_db):
         moveMotor(Motors.LOWER.value, scanningLowerStepSize, Direction.POSITIVE.value) #moving lower motor 1 step 
         lCounter += (scanningLowerStepSize*Direction.POSITIVE.value)
         count_lower_end += 1
-        if count_lower_end >= maxStepsOfLower: #quitting scan if we have reached maximum steps of lower motor
+        if count_lower_end > maxStepsOfLower: #quitting scan if we have reached maximum steps of lower motor
             moveL = False 
         previous_distance = distance
     moveMotor(Motors.LOWER.value, ((maxStepsOfLower*scanningLowerStepSize)/2), Direction.NEGATIVE.value)
@@ -173,8 +173,15 @@ def scanFace(max_db):
     else:
         moveMotor(Motors.UPPER.value, ((maxStepsOfUpper*scanningUpperStepSize)/2), Direction.POSITIVE.value)
     return dResult,uResult,lResult
-
-
+def get_reading_message(): 
+    context = zmq.Context()
+    consumer_receiver = context.socket(zmq.SUB)
+    consumer_receiver.setsockopt_string(zmq.SUBSCRIBE, "")    
+    consumer_receiver.connect("tcp://127.0.0.1:5558")
+    frame = consumer_receiver.recv_json()
+    consumer_receiver.close()    
+    print(len(frame["FRAME"]))    
+    return frame["FRAME"]
 def get_dist_mag(calibiration_mode, max_db):
     """
     Processing the last line in "radar_readings.txt" and returning the peak (db) of the reading using cfar (index of the peak , distance value , db)
@@ -187,38 +194,24 @@ def get_dist_mag(calibiration_mode, max_db):
     output : (peak_index , distance_value , db_value)
     """
     global readings, global_counter, counter_depth_get_dist_mag, max_depth
-    filereader = open('radar_readings.txt', 'r') #opening the file that has the readings
-    print ("counter_depth_get_dist_mag = ", counter_depth_get_dist_mag) 
-    lines = filereader.readlines() 
-    while (len(lines) == 0): #waiting untill we have readings
-        lines = filereader.readlines() 
-    line = lines[len(lines)-1]  #getting the last reading
-    filereader.close()  #closing the file
-   
-    try :
-        frame = json.loads(line) #reading line 
-    except: #exception can happen if we read corrupted line
-        open('radar_readings.txt', 'w').close()   #clear file
-        return get_dist_mag(calibiration_mode, max_db) 
-   
-    index, distance, db_frame = radar.detect_peaks(frame, calibiration_mode, max_db) #cfar to detect peak db with its distance and index in the frame
+    frame = get_reading_message()
+    index, distance, db_frame = radar.detect_peaks(frame, calibiration_mode, max_db)
     # index, distance, db_frame = radar.get_max_magnitude_in_range(frame)
     print("step number = ",global_counter," with db value = ", db_frame, " with a distance = ",distance)
     if (db_frame != None):  #if a frame is detected
         distances.append(distance) #save distance
         readings.append(db_frame) #save db
         counter_depth_get_dist_mag = 0
-        open('radar_readings.txt', 'w').close()
+        #open('radar_readings.txt', 'w').close()
         return index, distance, db_frame
-    elif counter_depth_get_dist_mag < max_depth:  #if there is no peak in the reading I will try again with maximum tries = max_depth (recursion tree)
-        
+    elif counter_depth_get_dist_mag < max_depth:        
         counter_depth_get_dist_mag += 1
         return get_dist_mag(calibiration_mode, max_db)
     else:  #if I have tried max_depth times and got no readings I will return -1 which indecates that I have no reading
         distances.append(0)
         readings.append(0)
         counter_depth_get_dist_mag = 0
-        open('radar_readings.txt', 'w').close()
+        #open('radar_readings.txt', 'w').close()
         return -1, -1, -1
     
     
@@ -366,12 +359,15 @@ def _3D_mapping(exp_name):
 
     ## getting the x , y , z axis of the points read by the radar
     x , y , z = np.array(dist)*np.cos(uAngel)*np.sin(lAngel) , np.array(dist)*np.cos(uAngel)*np.cos(lAngel) , np.array(dist)*np.sin(uAngel)
+    print("cos ")
     my_sample_x = np.array(x)
     my_sample_y = np.array(y)
     my_sample_z = np.array(z)
 
     ##saving the x , y ,z points  in an external file
-    save_3d_experement(my_sample_x,my_sample_y,my_sample_z,exp_name)
+    #save_3d_experement(my_sample_x,my_sample_y,my_sample_z,exp_name)
+
+    save_3d_experement(np.array(dist),np.array(uAngel),np.array(lAngel),exp_name)
 
     ##getting the min and max to estimate the depth of colors , then drawing the points
     max_y = np.amax(my_sample_y)
@@ -460,7 +456,8 @@ if __name__ == "__main__":
     # t1.join()
 
     # move_with_keyboard ()
-    _3D_mapping("corner")
+    file_name = input("enter experment name")
+    _3D_mapping(file_name)
     #_mag_dist_mapping("corner")
 
 
