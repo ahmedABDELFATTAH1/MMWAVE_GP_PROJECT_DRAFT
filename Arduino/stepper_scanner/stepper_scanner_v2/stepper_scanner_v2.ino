@@ -60,13 +60,13 @@ void loop()
     {
       int movement = dataString.substring(1,dataString.length()-1).toInt();
       move_lower_motor(movement);
-      Serial.println(movement);
+      send_confirmation(movement);
     }
     else if  (dataString[0] == 'u')
     {
       int movement = dataString.substring(1,dataString.length()-1).toInt();
       move_upper_motor(movement);
-      Serial.println(movement);
+      send_confirmation(movement);
     }
     else
     {
@@ -86,4 +86,9 @@ void move_upper_motor(int number_of_steps) {
     long current_position = upper_motor.currentPosition();
      upper_motor.moveTo(current_position+number_of_steps);
      upper_motor.runToPosition();
+}
+
+void send_confirmation(int movement){
+
+  Serial.println(movement);
 }
