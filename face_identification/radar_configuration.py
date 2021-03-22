@@ -2,7 +2,7 @@ import serial
 import time
 import numpy as np
 import json
-
+import zmq
 import matplotlib.pyplot as plt
 
 
@@ -43,9 +43,9 @@ class Radar():
         try:
             self.ser.baudrate = self.baudrate
             self.ser.port = self.sensor_port
-            self.ser.timeout = 1
+            # self.ser.timeout = 1
             self.ser.open()
-        except:
+        except serial.SerialException:
             raise Exception('cant open connection')
 
     def close(self):
@@ -157,14 +157,15 @@ class Radar():
                     else:
                         print ('error in frame size')
                 except:
-                    print ('can\'t create the frame')     
+                    print ('can\'t create the frame')    
+
     def setup_radar(self):
         if(self.is_open()):
             self.close()
             self.start()
         else :
             self.start()
-        self.clear_buffer()
+
 
     def get_median_distance(self, num):  
         frame = self.get_reading()         
@@ -200,7 +201,37 @@ class Radar():
             return reading
         else:
             return self.get_reading()
+
+    def get_frame(self):
+        frame = []
+        frame_range = False
+        while True:
+            try:
+                oneByte = self.ser.read(1).decode('utf-8')
+            except:
+                print("sorry wrong format please convert to tsv mode")
+                raise TypeError            
+            if frame_range: 
+                if oneByte == "\r\n":
+                    #end of frame
+                    frame_range = False             
+                    return frame  
+                elif oneByte == "!R":                    
+                    frame = []
+                else:
+                    try:
+                        num = int(oneByte)
+                        frame.append(num)
+                    except ValueError:
+                        frame = []
+                        frame_range = False                         
+            if oneByte == "!R":
+                #this means start of the desired frame 
+                frame_range = True
             
+
+                
+
     def read_magnitude(self):
         '''
         this function for reading a frame from  the radar that contains the magintude information
@@ -208,6 +239,7 @@ class Radar():
         #print(line)
         line = self.ser.readline()  # read a line from the sensor
         #print(line)
+
         newLine = line.decode("utf-8")  
         # print (newLine)           
         # !R \t counter \t frame_size \t 109 \t 255 0-->-140 /r/n
@@ -250,6 +282,7 @@ class Radar():
         
 
     def detect_peaks(self,frame, calibiration_mode, max_db):
+        
         """
         Detect peaks with CFAR algorithm.
 
@@ -305,22 +338,30 @@ class Radar():
             #     pass
             return max_index,x[max_index],y[max_index]
        
-    
-                    
+'''
+https://stackoverflow.com/questions/25188792/how-can-i-use-send-json-with-pyzmq-pub-sub
+
+'''   
+def mogrify(topic, msg):
+        """ json encode the message and prepend the topic """
+        return topic + ' ' + json.dumps(msg)            
+
 if __name__ == "__main__":
     radar = Radar()
     radar.setup_radar() 
     while(1):
-        radar.save_readings()
-        # frame = radar.get_reading()         
-        # indexes,_ =  radar.detect_peaks(frame)  
-        # if indexes is None:
-        #     indexes = []
-        # y= np.array(frame)
-        # y =y+ np.abs(np.min(y))
-        # x = np.arange(y.size)*radar.bin_resolution      
-        # plt.plot(x, y)
-        # plt.plot(x[indexes],y[indexes], 'rD')
-        # plt.xlabel('x')
-        # plt.ylabel('y')
-        # plt.show()
+        context = zmq.Context()
+        zmq_socket = context.socket(zmq.PUB)    
+        zmq_socket.bind("tcp://127.0.0.1:5558")
+        count=0
+        # Start your result manager and workers before you start your producers
+        while True:
+            frame_payload = radar.get_reading()
+            print(len(frame_payload))
+            print(count)
+            count+=1
+            frame = {
+                "FRAME":frame_payload
+            }
+            zmq_socket.send_json(frame)
+        

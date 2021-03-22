@@ -11,7 +11,7 @@ import json
 import numpy as np
 from threading import Thread
 from radar_configuration import Radar
-
+app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 global_frame = -1
 
@@ -71,83 +71,84 @@ def update_2d_graph(y, index, bin_resolution):
 #fig.data[0].update(mode='markers')
 
 
-# colors = {
-#     'background': '#FFFFFF',
-#     'text': '#111111',
-#     'mytext': '#111111',
-#     'btncolor' : '#6495ED'
-# }
+colors = {
+    'background': '#FFFFFF',
+    'text': '#111111',
+    'mytext': '#111111',
+    'btncolor' : '#6495ED'
+}
 
 
-# body = {
-#     'backgroundColor': colors['background'],
-#     "width": "100%",
-#     "height": "100%",
-#     "position": "absolute"
-# }
-# app.layout = html.Div(children=[
-#     html.Div(children='FACE IDENTIFICATION USING RADAR SYSTEM', style={
-#         'textAlign': 'center',
-#         'color': colors['text'],
-#         'marginTop':"10px",
-#         'fontSize':"40px"
-#     }),
-#     html.Div(style={
-#         "float": "right"
-#     }, children=[html.H1(children='SPONSERED BY GOODIX EGYPT', style={
-#         'fontSize': "20px",
-#         'color': colors['mytext'],
-#         'marginRight':"50px"
+body = {
+    'backgroundColor': colors['background'],
+    "width": "100%",
+    "height": "100%",
+    "position": "absolute"
+}
 
-#     }), html.Div(html.Img(style={"marginLeft": "20px",
-#                                  "alignSelf": "center",
-#                                  "margin": "auto",
-#                                  },
-#                           width="80px", height="80px", src=app.get_asset_url("company_logo.png"), alt="Girl in a jacket"), style={
-#         "justifyContent": "center",
-#         "justifyItems": "center",
-#         "textAlign": "center"
-#     })]),
+app.layout = html.Div(children=[
+    html.Div(children='FACE IDENTIFICATION USING RADAR SYSTEM', style={
+        'textAlign': 'center',
+        'color': colors['text'],
+        'marginTop':"10px",
+        'fontSize':"40px"
+    }),
+    html.Div(style={
+        "float": "right"
+    }, children=[html.H1(children='SPONSERED BY GOODIX EGYPT', style={
+        'fontSize': "20px",
+        'color': colors['mytext'],
+        'marginRight':"50px"
 
-#     dcc.Graph(id='live-graph', figure=fig, style={
-#         "position": "relative",
-#         "width": "70%",
-#         "margin": "50px"
-#     }),
-#     dcc.Interval(
-#         id='graph-update',
-#         interval=1000,
-#         n_intervals=1
-#     ),
-#     html.Div(style={
-#         "justifyContent": "center",
-#         "justifyItems": "center",
-#         "textAlign": "center"}, children=[html.Button('Start Scan', id='submit-val', n_clicks=0, style={
-#             "backgroundColor": colors['btncolor'],
-#             "color": colors['background']
-#         }), html.Button('Start Scan', id='submit-vall', n_clicks=0, style={
-#             "backgroundColor": colors['btncolor'],
-#             "color": colors['background']
-#         })])
+    }), html.Div(html.Img(style={"marginLeft": "20px",
+                                 "alignSelf": "center",
+                                 "margin": "auto",
+                                 },
+                          width="80px", height="80px", src=app.get_asset_url("company_logo.png"), alt="Girl in a jacket"), style={
+        "justifyContent": "center",
+        "justifyItems": "center",
+        "textAlign": "center"
+    })]),
 
-
-# ], style=body)
+    dcc.Graph(id='live-graph', figure=fig, style={
+        "position": "relative",
+        "width": "70%",
+        "margin": "50px"
+    }),
+    dcc.Interval(
+        id='graph-update',
+        interval=1000,
+        n_intervals=1
+    ),
+    html.Div(style={
+        "justifyContent": "center",
+        "justifyItems": "center",
+        "textAlign": "center"}, children=[html.Button('Start Scan', id='submit-val', n_clicks=0, style={
+            "backgroundColor": colors['btncolor'],
+            "color": colors['background']
+        }), html.Button('Start Scan', id='submit-vall', n_clicks=0, style={
+            "backgroundColor": colors['btncolor'],
+            "color": colors['background']
+        })])
 
 
-# @app.callback(
-#     Output(component_id='live-graph', component_property='figure'),
-#     [Input('graph-update', 'n_intervals')]
-# )
-# def update_graph_scatter(n):
-#     index,_ = radar.detect_peaks(frame)
-#     fig = update_2d_graph(frame, index, bin_resolution)
-#     fig.data[0].update(mode='lines+markers')
-#     fig.update_layout(uirevision="foo")
-#     return fig
+], style=body)
+
+
+@app.callback(
+    Output(component_id='live-graph', component_property='figure'),
+    [Input('graph-update', 'n_intervals')]
+)
+def update_graph_scatter(n):
+    index,_ = radar.detect_peaks(frame)
+    fig = update_2d_graph(frame, index, bin_resolution)
+    fig.data[0].update(mode='lines+markers')
+    fig.update_layout(uirevision="foo")
+    return fig
     
 if __name__ == '__main__':
     t1 = Thread(target=get_readings_thread,daemon=True)
     t1.start()
     t1.join()
-    #app.run_server(debug=True)
+    app.run_server(debug=True)
     

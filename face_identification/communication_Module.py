@@ -184,23 +184,18 @@ def scanFace(max_db):
     else:
         moveMotor(Motors.UPPER.value, ((maxStepsOfUpper*scanningUpperStepSize)/2), Direction.POSITIVE.value)
     return dResult,uResult,lResult
-
+def get_reading_message(): 
+    context = zmq.Context()
+    consumer_receiver = context.socket(zmq.SUB)
+    consumer_receiver.setsockopt_string(zmq.SUBSCRIBE, "")    
+    consumer_receiver.connect("tcp://127.0.0.1:5558")
+    frame = consumer_receiver.recv_json()
+    consumer_receiver.close()    
+    print(len(frame["FRAME"]))    
+    return frame["FRAME"]
 def get_dist_mag(calibiration_mode, max_db):
     global readings, global_counter, counter_depth_get_dist_mag, max_depth
-    filereader = open('radar_readings.txt', 'r')
-    print ("counter_depth_get_dist_mag = ", counter_depth_get_dist_mag)
-    lines = filereader.readlines()
-    while (len(lines) == 0):
-        lines = filereader.readlines()
-    line = lines[len(lines)-1]
-    filereader.close()
-   
-    try :
-        frame = json.loads(line)
-    except:
-        open('radar_readings.txt', 'w').close()
-        return get_dist_mag(calibiration_mode, max_db)
-   
+    frame = get_reading_message()
     index, distance, db_frame = radar.detect_peaks(frame, calibiration_mode, max_db)
     # index, distance, db_frame = radar.get_max_magnitude_in_range(frame)
     print("step number = ",global_counter," with db value = ", db_frame, " with a distance = ",distance)
@@ -208,17 +203,16 @@ def get_dist_mag(calibiration_mode, max_db):
         distances.append(distance)
         readings.append(db_frame)
         counter_depth_get_dist_mag = 0
-        open('radar_readings.txt', 'w').close()
+        #open('radar_readings.txt', 'w').close()
         return index, distance, db_frame
-    elif counter_depth_get_dist_mag < max_depth:
-        
+    elif counter_depth_get_dist_mag < max_depth:        
         counter_depth_get_dist_mag += 1
         return get_dist_mag(calibiration_mode, max_db)
     else:
         distances.append(0)
         readings.append(0)
         counter_depth_get_dist_mag = 0
-        open('radar_readings.txt', 'w').close()
+        #open('radar_readings.txt', 'w').close()
         return -1, -1, -1
     
 def scan2D_lower(calibiration_mode, max_db):
@@ -408,7 +402,7 @@ if __name__ == "__main__":
     # t1.join()
 
     # move_with_keyboard ()
-    _3D_mapping("waleed_face")
+    _3D_mapping("waleed_face1")
     #_mag_dist_mapping("corner")
 
 
