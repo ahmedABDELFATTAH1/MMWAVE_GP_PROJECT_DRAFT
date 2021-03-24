@@ -55,23 +55,22 @@ void loop()
     if(data != -1 && data != 10)
       dataString = dataString+(char)data;
     }while(data !=36);
-    Serial.println(dataString);
-//    Serial.println(dataString);
+    
     if (dataString[0] == 'l')
     {
       int movement = dataString.substring(1,dataString.length()-1).toInt();
       move_lower_motor(movement);
-      //Serial.println(movement);
+      send_confirmation(dataString);
     }
     else if  (dataString[0] == 'u')
     {
       int movement = dataString.substring(1,dataString.length()-1).toInt();
       move_upper_motor(movement);
-      //Serial.println(movement);
+      send_confirmation(dataString);
     }
     else
     {
-      Serial.println("you are donkey");
+      Serial.println("Error: invalid command");
     }
   }
 }
@@ -87,4 +86,8 @@ void move_upper_motor(int number_of_steps) {
     long current_position = upper_motor.currentPosition();
      upper_motor.moveTo(current_position+number_of_steps);
      upper_motor.runToPosition();
+}
+
+void send_confirmation(String dataString){
+  Serial.println("Confirmation :" + dataString);
 }
