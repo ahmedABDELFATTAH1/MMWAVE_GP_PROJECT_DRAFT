@@ -184,6 +184,7 @@ def scanFace(max_db):
     else:
         moveMotor(Motors.UPPER.value, ((maxStepsOfUpper*scanningUpperStepSize)/2), Direction.POSITIVE.value)
     return dResult,uResult,lResult
+    
 def get_reading_message(): 
     context = zmq.Context()
     consumer_receiver = context.socket(zmq.SUB)
@@ -193,6 +194,8 @@ def get_reading_message():
     consumer_receiver.close()    
     print(len(frame["FRAME"]))    
     return frame["FRAME"]
+
+    
 def get_dist_mag(calibiration_mode, max_db):
     global readings, global_counter, counter_depth_get_dist_mag, max_depth
     frame = get_reading_message()
@@ -414,7 +417,7 @@ if __name__ == "__main__":
 
 
 
-#######################################unwanted_for_now#######################################
+####################################### unwanted_for_now #######################################
 # """
 # if face was found return the direction of the lower motor 
 # else return none
