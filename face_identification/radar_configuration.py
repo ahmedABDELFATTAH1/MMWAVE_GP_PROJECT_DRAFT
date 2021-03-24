@@ -285,7 +285,6 @@ class Radar():
         
         """
         Detect peaks with CFAR algorithm.
-
         num_train: Number of training cells.
         num_guard: Number of guard cells.
         rate_fa: False alarm rate. 
@@ -357,4 +356,3 @@ if __name__ == "__main__":
                 "FRAME":frame_payload
             }
             zmq_socket.send_json(frame)
-        
