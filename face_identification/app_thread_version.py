@@ -11,19 +11,13 @@ import json
 import numpy as np
 from threading import Thread
 from radar_configuration import Radar
+
+external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
-global_frame = -1
 
-def get_readings_thread():
-    global global_frame
-    radar = Radar()
-    radar.setup_radar()
-    while(1):
-        frame = radar.get_reading()
-        # frame = np.random.uniform(low=0.5, high=13.3, size=(50,))
-        print(len(frame))
-        global_frame = frame
+
+
 
 
 # configuration_file = open('configuration.json',)
@@ -32,26 +26,10 @@ def get_readings_thread():
 
 # np.random.seed(1)
 
-# global_reading =np.random.uniform(low=0.5, high=13.3, size=(50,))
-# radar =Radar()
 
 
-# external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+
 # app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-'''
-N = 100
-random_x = np.linspace(0, 1, N)
-random_y0 = np.random.randn(N) + 5
-random_y1 = np.random.randn(N)
-random_y2 = np.random.randn(N) - 5
-
-fig = go.Figure()
-
-fig.add_trace(go.Scatter(x=random_x, y=random_y1,
-                    mode='lines+markers',
-                    name='lines+markers'))
-'''
-
 
 def update_2d_graph(y, index, bin_resolution):
     x = [i for i in range(0, len(y), bin_resolution)]
@@ -65,8 +43,8 @@ def update_2d_graph(y, index, bin_resolution):
     return px.scatter(df, x="x", y="y", color="color", range_y = [-140,30])
 
 
-# fig = px.scatter(df, x="x", y="y", color="fruit", custom_data=["customdata"])
-# fig = update_2d_graph(np.random.uniform(low=0.5, high=13.3, size=(50,)), 1, 1)
+#fig = px.scatter(df, x="x", y="y", color="fruit", custom_data=["customdata"])
+fig = update_2d_graph(np.random.uniform(low=0.5, high=13.3, size=(50,)), 1, 1)
 #fig = update_2d_graph(global_reading, 1, bin_resolution)
 #fig.data[0].update(mode='markers')
 
@@ -126,9 +104,6 @@ app.layout = html.Div(children=[
         "textAlign": "center"}, children=[html.Button('Start Scan', id='submit-val', n_clicks=0, style={
             "backgroundColor": colors['btncolor'],
             "color": colors['background']
-        }), html.Button('Start Scan', id='submit-vall', n_clicks=0, style={
-            "backgroundColor": colors['btncolor'],
-            "color": colors['background']
         })])
 
 
@@ -147,8 +122,8 @@ def update_graph_scatter(n):
     return fig
     
 if __name__ == '__main__':
-    t1 = Thread(target=get_readings_thread,daemon=True)
-    t1.start()
-    t1.join()
+    #t1 = Thread(target=get_readings_thread,daemon=True)
+    #t1.start()
+    #t1.join()
     app.run_server(debug=True)
     

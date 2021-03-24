@@ -336,13 +336,7 @@ class Radar():
             #     #print(x)
             #     pass
             return max_index,x[max_index],y[max_index]
-       
-'''
-https://stackoverflow.com/questions/25188792/how-can-i-use-send-json-with-pyzmq-pub-sub
-'''   
-def mogrify(topic, msg):
-        """ json encode the message and prepend the topic """
-        return topic + ' ' + json.dumps(msg)            
+         
 
 if __name__ == "__main__":
     radar = Radar()

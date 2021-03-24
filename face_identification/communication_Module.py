@@ -173,6 +173,7 @@ def scanFace(max_db):
     else:
         moveMotor(Motors.UPPER.value, ((maxStepsOfUpper*scanningUpperStepSize)/2), Direction.POSITIVE.value)
     return dResult,uResult,lResult
+    
 def get_reading_message(): 
     context = zmq.Context()
     consumer_receiver = context.socket(zmq.SUB)
@@ -182,6 +183,8 @@ def get_reading_message():
     consumer_receiver.close()    
     print(len(frame["FRAME"]))    
     return frame["FRAME"]
+
+    
 def get_dist_mag(calibiration_mode, max_db):
     """
     Processing the last line in "radar_readings.txt" and returning the peak (db) of the reading using cfar (index of the peak , distance value , db)
@@ -441,10 +444,16 @@ def _mag_dist_mapping(exp_name,scaning_number = 2 ,increase_upper_angel = False)
     plt.show()  
 
 
+def Scan3d(file_name):    
+    _3D_mapping(file_name)
+
+radar = Radar()
+arduino = set_up()
+
 if __name__ == "__main__":
 
-    radar = Radar()
-    arduino = set_up()
+    # radar = Radar()
+    # arduino = set_up()
     # radar.setup_radar()
     # radar.setup_radar_system_configuration()
     # radar.setup_radar_pll_configuration()
@@ -467,7 +476,7 @@ if __name__ == "__main__":
 
 
 
-#######################################unwanted_for_now#######################################
+####################################### unwanted_for_now #######################################
 # """
 # if face was found return the direction of the lower motor 
 # else return none
