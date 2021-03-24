@@ -372,17 +372,7 @@ def _3D_mapping(exp_name):
 
     save_3d_experement(np.array(dist),np.array(uAngel),np.array(lAngel),exp_name)
 
-    ##getting the min and max to estimate the depth of colors , then drawing the points
-    max_y = np.amax(my_sample_y)
-    min_y = np.amin(my_sample_y)
-    df = pd.DataFrame(my_sample_x,columns=['X (mm)'])
-    df['Y (mm)'] = my_sample_y
-    df['Z (mm)'] = my_sample_z
-    df['Depth'] = my_sample_y
-    color = px.colors.sequential.Rainbow[::-1]
-    df.head()
-    fig = px.scatter_3d(df, x='X (mm)', y='Y (mm)', z='Z (mm)', color='Depth', title="ٌRadar Point Cloud" , range_color=[max_y,min_y],color_continuous_scale=color)
-    fig.show()
+
 
  
 
@@ -442,10 +432,16 @@ def _mag_dist_mapping(exp_name,scaning_number = 2 ,increase_upper_angel = False)
     plt.show()  
 
 
+def Scan3d(file_name):    
+    _3D_mapping(file_name)
+
+radar = Radar()
+arduino = set_up()
+
 if __name__ == "__main__":
 
-    radar = Radar()
-    arduino = set_up()
+    # radar = Radar()
+    # arduino = set_up()
     # radar.setup_radar()
     # radar.setup_radar_system_configuration()
     # radar.setup_radar_pll_configuration()

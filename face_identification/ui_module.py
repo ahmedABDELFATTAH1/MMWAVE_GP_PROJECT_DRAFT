@@ -1,3 +1,5 @@
+from typing import Mapping
+# from communication_Module import Scan3d
 from logging import debug
 import dash
 import dash_core_components as dcc
@@ -53,9 +55,9 @@ marker_size = 2
 
 
 
-dist = np.loadtxt("3D_Experements/"+"base_x.txt") 
-upper_angle = np.loadtxt("3D_Experements/"+"base_y.txt") 
-lower_angle = np.loadtxt("3D_Experements/"+"base_z.txt") 
+dist = np.loadtxt("3D_Experements/"+"face3_x.txt") 
+upper_angle = np.loadtxt("3D_Experements/"+"face3_y.txt") 
+lower_angle = np.loadtxt("3D_Experements/"+"face3_z.txt") 
 
 my_sample_x = np.array(dist)*np.cos(upper_angle)*np.sin(lower_angle)
 my_sample_y = np.array(dist)*np.cos(upper_angle)*np.cos(lower_angle)
@@ -73,7 +75,7 @@ max_depth = np.amax(my_sample_y)
 min_depth = np.amin(my_sample_y)
 
 
-fig3d = px.scatter_3d(df, x='X (mm)', y='Y (mm)', z='Z (mm)', color='Depth', title="ٌRadar Point Cloud" , range_color=[min_depth-200,max_depth+200],color_continuous_scale=color , opacity=1)
+fig3d = px.scatter_3d(df, x='X (mm)', y='Y (mm)', z='Z (mm)', color='Depth', title="ٌRadar Point Cloud" , range_color=[min_depth,max_depth],color_continuous_scale=color , opacity=1)
 fig3d.update_traces(marker=dict(size=marker_size, line=dict(width=0)))             
 
 
@@ -84,14 +86,21 @@ colors = {
     'background': '#FFFFFF',
     'text': '#111111',
     'mytext': '#111111',
-    'btncolor' : '#6495ED'
+    'btncolor' : '#6495ED',
+    'disabled_color' : '#AAAAAA'
 }
 
 
 white_button_style = {
             "backgroundColor": colors['btncolor'],
             "color": colors['background'],
-            "marginleft" : "30px"
+            "marginLeft" : "30px"
+        }
+
+disabled_button_style = {
+            "backgroundColor": colors['disabled_color'],
+            "color": colors['text'],
+            "marginLeft" : "30px"
         }
 
 red_button_style = {'background-color': 'red',
@@ -162,9 +171,15 @@ app.layout = html.Div(children=[
       html.Div(style={
         "justifyContent": "center",
         "justifyItems": "center",
-        "textAlign": "center"}, children=[html.Button('Start Scan', id='start-scan', n_clicks=0, style=white_button_style),
-        html.Button('Save Scan', id='save-scan', n_clicks=0, style=white_button_style)]),       
-        dcc.Graph(id="graph-3d-run",figure=fig3d),    
+        "textAlign": "center"}, children=[ dcc.Input(
+            id="file_name_id",
+            type="text",
+            placeholder="enter file name",
+        ),html.Button('Start Scan', id='start-scan', n_clicks=0, style=white_button_style),
+        html.Button('Save Scan', id='save-scan', n_clicks=0, style=disabled_button_style)]),       
+        dcc.Graph(id="graph-3d-run",figure=fig3d,style={
+            'height':'1000px'
+        }),    
          dcc.Upload(
         id='upload-data',
         children=html.Div([
@@ -193,7 +208,30 @@ app.layout = html.Div(children=[
 
 
 
+scanning = False
+scanning_count = -1
+Done_scanning = False
 
+@app.callback([Output('start-scan','style'),Output('save-scan','style')],
+    [Input('start-scan', 'n_clicks')]
+    ,[State('start-scan', 'style'),State('file_name_id', 'value')])
+def start_scan_event(n_clicks,button_style,file_name):  
+    print(file_name)  
+    global scanning , scanning_count
+    if scanning:        
+        return red_button_style,disabled_button_style
+    else:
+        if scanning_count < 0 :
+            scanning_count +=1
+            return white_button_style,disabled_button_style
+        if file_name is None or file_name == "" or file_name.replace(" ", "")==0:
+            return white_button_style,disabled_button_style
+        if len(file_name.split(' '))> 1:
+            return white_button_style,disabled_button_style
+        scanning = True    
+        #Scan3d(file_name)
+        scanning = False
+        return white_button_style,white_button_style
 
 
 @app.callback(Output('graph-3d-save', 'figure'),
@@ -275,7 +313,6 @@ def update_output(n_clicks):
         return "Stop Readings",red_button_style , False
    
     
-
 
 
 
