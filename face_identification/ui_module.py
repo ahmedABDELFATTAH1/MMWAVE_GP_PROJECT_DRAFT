@@ -1,5 +1,5 @@
 from typing import Mapping
-# from communication_Module import Scan3d
+from communication_Module import *
 from logging import debug
 import dash
 import dash_core_components as dcc
@@ -21,6 +21,8 @@ import plotly.express as px
 import base64
 import io
 np.random.seed(1)
+
+
 
 global_reading =np.random.uniform(low=0.5, high=13.3, size=(50,))
 global_index = 1
@@ -50,7 +52,7 @@ fig.data[0].update(mode='markers')
 
 
 color = px.colors.sequential.Rainbow[::-1]
-marker_size = 2
+marker_size = 5
 
 
 
@@ -229,7 +231,7 @@ def start_scan_event(n_clicks,button_style,file_name):
         if len(file_name.split(' '))> 1:
             return white_button_style,disabled_button_style
         scanning = True    
-        #Scan3d(file_name)
+        Scan3d(file_name)
         scanning = False
         return white_button_style,white_button_style
 
@@ -301,7 +303,7 @@ def get_reading_message():
     [dash.dependencies.Output('frame_visualise_button', 'children'),dash.dependencies.Output('frame_visualise_button', 'style'),
     dash.dependencies.Output('graph-update','disabled')],
     [dash.dependencies.Input('frame_visualise_button', 'n_clicks')])
-def update_output(n_clicks): 
+def update_output1(n_clicks): 
     print("hello")   
     global show_figures
     print(n_clicks)
@@ -341,8 +343,6 @@ def update_graph_scatter(n,figure):
 
 
     
-if __name__ == '__main__':   
-    color = px.colors.sequential.Rainbow[::-1]
-    marker_size = 2
-    app.run_server(debug=True)
+if __name__ == '__main__':    
+    app.run_server()
     
