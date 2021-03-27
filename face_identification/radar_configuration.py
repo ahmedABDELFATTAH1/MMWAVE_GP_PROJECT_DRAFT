@@ -4,7 +4,12 @@ import numpy as np
 import json
 import zmq
 import matplotlib.pyplot as plt
+import json
+import numpy as np
+from tensorflow import keras
+from tensorflow.keras import layers,Sequential,models
 
+import os.path
 
 
 class Radar():
@@ -13,6 +18,7 @@ class Radar():
     '''
 
     def __init__(self):
+        
         configuration_file = open('configuration.json',)
         self.configuration_json = json.load(configuration_file)
         self.sensor_port = self.configuration_json["SENSOR_PORT"]
@@ -25,6 +31,8 @@ class Radar():
         self.false_rate = self.configuration_json["CFAR_CONFIG"]["RATE_FA"]
         self.threashold = self.configuration_json["THRESHOLD"]
         self.frame_size = self.configuration_json["FRAME_SIZE"]
+        # self.g_model = models.load_model('model_naive3.h5')
+        self.f_model = models.load_model('face_model.h5')
         '''
         define a connection through the serial port
         '''
@@ -277,12 +285,14 @@ class Radar():
         return max_index,max_distance,max_magnitude
 
 
+    def make_prediction(self,reading,model):
+        result = model.predict(np.reshape(reading,(1,len(reading))))>.3
+        return result[0][0]
         
-
-        
-
-    def detect_peaks(self,frame, calibiration_mode, max_db):
-        
+    def detect_peaks(self,frame, calibiration_mode, max_db):        
+       
+        # face_prediction = self.make_prediction(frame,self.g_model)
+        face_body_prediction = True#self.make_prediction(frame,self.f_model)
         """
         Detect peaks with CFAR algorithm.
         num_train: Number of training cells.
@@ -294,7 +304,9 @@ class Radar():
 
         y= np.array(frame)
         y =y+ np.abs(np.min(y))
-        x = np.arange(y.size)*self.bin_resolution     
+        x = np.arange(y.size)*self.bin_resolution   
+        print(self.bin_resolution)  
+        #print(x)  
         num_cells = y.size
         num_train_half = round(num_train / 2)
         num_guard_half = round(num_guard / 2)
@@ -303,39 +315,33 @@ class Radar():
         
         alpha = num_train*(self.false_rate**(-1/num_train) - 1) # threshold facto
         # print(alpha)
-        for i in range(num_side, num_cells - num_side):
-            if i != i-num_side+np.argmax(y[i-num_side:i+num_side+1]):
-                continue
-            sum1 = np.sum(y[i-num_side:i+num_side+1])
-            sum2 = np.sum(y[i-num_guard_half:i+num_guard_half+1])
-            p_noise = (sum1 - sum2) / num_train
+        for i in range(len(frame)):
+            # if i != i-num_side+np.argmax(y[i-num_side:i+num_side+1]):
+            #     continue
+            # sum1 = np.sum(y[i-num_side:i+num_side+1])
+            # sum2 = np.sum(y[i-num_guard_half:i+num_guard_half+1])
+            #p_noise = (sum1 - sum2) / num_train
             # print(p_noise)
-            threshold = alpha * p_noise
+            #threshold = alpha * p_noise
+            #y[i] >threshold
             if calibiration_mode == True:
-                if y[i] >threshold and x[i]>self.min_distance and x[i]<self.max_distance:
+                if  (frame[i] >= self.threashold) and x[i]>self.min_distance and x[i]<self.max_distance  and face_body_prediction:
                     peak_idx.append(i)
             else:
-                if y[i] >threshold and ((y[i]/max_db) >= self.threashold) and x[i]>self.min_distance and x[i]<self.max_distance:
+                if (frame[i] >= self.threashold) and x[i]>self.min_distance and x[i]<self.max_distance  and face_body_prediction:
                     peak_idx.append(i)
             # print("size of x",len(x))
         max_index = 0
         y_max = -1
         for index in peak_idx:
-            print ("inside peak detect")
+            # print ("inside peak detect")
             if y[index] > y_max:
                 max_index = index
                 y_max = y[index]
-        if y_max == -1:
-            # print("baaaad")
-            # print ("inside detect peaks frame with value = None ",frame)
+        if y_max == -1:            
             return None,None,None
-        else:
-            # maxindex, distance, db
-            # if max_index == 0:
-            #     #print("Hellooooo")
-            #     #print(x)
-            #     pass
-            return max_index,x[max_index],y[max_index]
+        else:            
+            return max_index,x[max_index],frame[max_index]
          
 
 
@@ -358,3 +364,8 @@ if __name__ == "__main__":
                 "FRAME":frame_payload
             }
             zmq_socket.send_json(frame)
+            # index,distance,magnitude = radar.detect_peaks(frame["FRAME"],True,0)
+            # print(distance)
+
+
+

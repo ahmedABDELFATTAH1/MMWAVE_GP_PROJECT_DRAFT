@@ -35,10 +35,10 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 
 def update_2d_graph(y, index, bin_resolution):
-    x = [i for i in range(0, len(y), bin_resolution)]
+    x = [i for i in range(0, len(y))]
     color = ['green' if i != index else "red" for i in x]
     df = pd.DataFrame({
-        "Frame FFT()": x,
+        "Frame FFT()": np.array(x)*bin_resolution,
         "Magnitude(dB)": y,
         "color": color
     })
@@ -235,6 +235,16 @@ def start_scan_event(n_clicks,button_style,file_name):
         scanning = False
         return white_button_style,white_button_style
 
+def filter_points(x,y,z):
+    new_samples_x = []
+    new_samples_y = []
+    new_samples_z = []
+    for x,y,z in zip(x,y,z):
+        if y < 510:
+            new_samples_x.append(x)
+            new_samples_y.append(y)
+            new_samples_z.append(z)
+    return np.array(new_samples_x),np.array(new_samples_y),np.array(new_samples_z)
 
 @app.callback(Output('graph-3d-save', 'figure'),
               [Input('upload-data', 'contents'),
@@ -258,9 +268,11 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
         if(dist is None or upper_angle is None or lower_angle is None):
             return fig3d
         else:   
-            my_sample_x = np.array(dist)*np.cos(upper_angle)*np.sin(lower_angle)
+            my_sample_x = np.array(dist)*np.cos(upper_angle)*np.sin(lower_angle)*-1
             my_sample_y = np.array(dist)*np.cos(upper_angle)*np.cos(lower_angle)
-            my_sample_z = np.array(dist)*np.sin(upper_angle)
+            my_sample_z = np.array(dist)*np.sin(upper_angle)*-1
+
+            # my_sample_x,my_sample_y,my_sample_z = filter_points(my_sample_x,my_sample_y,my_sample_z)
 
             df = pd.DataFrame(my_sample_x,columns=['X (mm)'])
             df['Y (mm)'] = my_sample_y
@@ -274,7 +286,7 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
             min_depth = np.amin(my_sample_y)
 
           
-            fig = px.scatter_3d(df, x='X (mm)', y='Y (mm)', z='Z (mm)', color='Depth', title="ٌ3d Mapping" , range_color=[min_depth-200,max_depth+200],color_continuous_scale=color , opacity=1)
+            fig = px.scatter_3d(df, x='X (mm)', y='Y (mm)', z='Z (mm)', color='Depth', title="ٌ3d Mapping" , range_color=[min_depth,max_depth],color_continuous_scale=color , opacity=1)
             fig.update_traces(marker=dict(size=marker_size, line=dict(width=0)))             
 
             return fig
@@ -292,7 +304,7 @@ def get_reading_message():
         frame = consumer_receiver.recv_json()   
     except:
         pass
-    print(frame)
+    # print(frame)
     consumer_receiver.close() 
     return frame 
 
@@ -332,9 +344,11 @@ def update_graph_scatter(n,figure):
     frame = get_reading_message()
     if frame is None:
         return figure
-    print(frame)
+    # print(frame)
     frame = frame["FRAME"]  
-    fig = update_2d_graph(frame, global_index, 1)
+    index, distance, db_frame = radar.detect_peaks(frame, True, None)
+    print("index value = "+str(index))
+    fig = update_2d_graph(frame, index, 2.1)
     fig.data[0].update(mode='lines+markers')
     fig.update_layout(uirevision="foo")
     return fig
