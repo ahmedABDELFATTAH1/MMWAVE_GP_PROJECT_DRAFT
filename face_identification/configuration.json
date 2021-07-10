@@ -1,12 +1,12 @@
 
 {
     "ARDUINO_PORT":"COM4",
-    "SENSOR_PORT":"COM6" ,
+    "SENSOR_PORT":"COM5" ,
     "SENSOR_FORMAT":"TSV" ,
     "BIN_RESOLUTION":2.1,
     "STATE_MIN":0,
     "STATE_MAX":2,
-    "FRAME_SIZE":1024,
+    "FRAME_SIZE":512,
     "THRESHOLD":-50,
     "BAUD_RATE":1000000,
     "PORT" : "5556",
