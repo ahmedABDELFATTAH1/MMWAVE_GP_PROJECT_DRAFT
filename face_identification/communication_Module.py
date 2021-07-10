@@ -308,6 +308,7 @@ def trigger_get_data():
     radar.trigger_reading()
     while(True):
         frame = radar.read_magnitude()
+        
         if frame != None:
             print(len(frame))
             print(frame)
@@ -418,6 +419,7 @@ def _mag_dist_mapping(exp_name,scaning_number = 2 ,increase_upper_angel = False)
 
     global readings, distances  # list of db(y) , distance(x)
     max_db = calibrate_scene ()
+    
     print ("MAX_dB = ",max_db)
 
     fig, ax = plt.subplots(nrows=scaning_number, ncols=2)

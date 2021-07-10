@@ -317,6 +317,7 @@ class Radar():
         y= np.array(frame)
         y =y+ np.abs(np.min(y))
         x = np.arange(y.size)*self.bin_resolution   
+        print(x)
         print(self.bin_resolution)  
         #print(x)  
         num_cells = y.size
@@ -337,20 +338,31 @@ class Radar():
             #threshold = alpha * p_noise
             #y[i] >threshold
             if calibiration_mode == True:
+
+
                 if  (frame[i] >= self.threashold) and x[i]>self.min_distance and x[i]<self.max_distance  and face_body_prediction:
+                    # print(frame[i] >= self.threashold)
+                    # print(x[i]>self.min_distance)
+                    # print(x[i]<self.max_distance)
+                    # print(face_body_prediction)
+                    print("FFFFFFFFFFFFFF")
+                    print(x[i])
                     peak_idx.append(i)
+                    print(peak_idx)
             else:
                 if (frame[i] >= self.threashold) and x[i]>self.min_distance and x[i]<self.max_distance  and face_body_prediction:
                     peak_idx.append(i)
             # print("size of x",len(x))
         max_index = 0
-        y_max = -1
+        y_max = -140
+        print(peak_idx)
         for index in peak_idx:
             # print ("inside peak detect")
+            
             if y[index] > y_max:
                 max_index = index
                 y_max = y[index]
-        if y_max == -1:            
+        if y_max == -140:            
             return None,None,None
         else:            
             return max_index,x[max_index],frame[max_index]
