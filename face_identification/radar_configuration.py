@@ -88,6 +88,8 @@ class Radar():
     def configure_radar(self, command):
         self.ser.write((command+"\r\n").encode())
 
+    def trigger_reading(self):
+        self.ser.write(("!M\r\n").encode())
     
     def setup_radar_system_configuration(self):
         json_config = self.configuration_json["SYS_CONFIG"]
@@ -210,6 +212,7 @@ class Radar():
         else:
             return self.get_reading()
 
+
     def get_frame(self):
         frame = []
         frame_range = False
@@ -246,18 +249,21 @@ class Radar():
         '''
         #print(line)
         line = self.ser.readline()  # read a line from the sensor
-        #print(line)
+        # print(line)
 
         newLine = line.decode("utf-8")  
         # print (newLine)           
         # !R \t counter \t frame_size \t 109 \t 255 0-->-140 /r/n
         
         splittedLine = newLine.split("\t")
+        # print(splittedLine[0])
         if (splittedLine[0] != '!R'):  # check for start frame
             return None
         index = -1
         try:
+            # print("here")
             index = splittedLine.index('\r\n')  # seach for the end frame
+            # print(index)
         except ValueError as e:
             #print(e)
             return None
