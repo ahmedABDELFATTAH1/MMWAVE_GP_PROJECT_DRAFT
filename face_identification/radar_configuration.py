@@ -285,7 +285,6 @@ class Radar():
         
         """
         Detect peaks with CFAR algorithm.
-
         num_train: Number of training cells.
         num_guard: Number of guard cells.
         rate_fa: False alarm rate. 
@@ -340,7 +339,6 @@ class Radar():
        
 '''
 https://stackoverflow.com/questions/25188792/how-can-i-use-send-json-with-pyzmq-pub-sub
-
 '''   
 def mogrify(topic, msg):
         """ json encode the message and prepend the topic """
@@ -364,4 +362,3 @@ if __name__ == "__main__":
                 "FRAME":frame_payload
             }
             zmq_socket.send_json(frame)
-        

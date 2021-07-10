@@ -1,25 +1,25 @@
 
 {
     "ARDUINO_PORT":"COM3",
-    "SENSOR_PORT":"COM5" ,
+    "SENSOR_PORT":"COM4" ,
     "SENSOR_FORMAT":"TSV" ,
-    "BIN_RESOLUTION":4,
+    "BIN_RESOLUTION":1,
     "STATE_MIN":0,
     "STATE_MAX":2,
-    "FRAME_SIZE":512,
+    "FRAME_SIZE":1024,
     "THRESHOLD":0.4,
     "BAUD_RATE":1000000,
     "PORT" : "5556",
-    "MAX_DEPTH":5, 
+    "MAX_DEPTH":1, 
     "RANGE_OF_INTEREST":{
         "MIN_DISTANCE":300,
-        "MAX_DISTANCE":900
+        "MAX_DISTANCE":800
     },    
     "NUMBER_OF_TRAIN_SET":10000,
-    "NUMBER_SAMPLES":255,
+    "NUMBER_SAMPLES":512,
     "CFAR_CONFIG":
     {
-        "GUART_NUMBER":5,
+        "GUART_NUMBER":10,
         "BACKGROUND_NUMBER":150,
         "RATE_FA":0.4
     },
@@ -27,11 +27,11 @@
 
     "_comment_motors": "Motors config section .....",
     "STEP_ANGLE":0.45,
-    "LOWER_STEP_SIZE":5,
-    "UPPER_STEP_SIZE":5,
-    "MAX_ANGLE_UPPER":45,
-    "MAX_ANGLE_LOWER":45,
-    "MOTORS_DELAY":0,
+    "LOWER_STEP_SIZE":1,
+    "UPPER_STEP_SIZE":1,
+    "MAX_ANGLE_UPPER":22.5,
+    "MAX_ANGLE_LOWER":22.5,
+    "MOTORS_DELAY":0.0,
 
     "_comment_radar": "Radar config section .....",
     "SYS_CONFIG":{
