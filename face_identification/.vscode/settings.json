@@ -1,5 +1,8 @@
 {
+<<<<<<< HEAD
     "python.pythonPath": "D:\\ProgramData\\Anaconda3\\envs\\tensorflow\\python.exe",
+=======
+>>>>>>> c0330eec572241bc044e33af1f5dd0676c1365e6
     "python.formatting.provider": "autopep8",
     "python.linting.pylintEnabled": true,
     "python.linting.enabled": true,

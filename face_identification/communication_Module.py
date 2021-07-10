@@ -11,6 +11,12 @@ from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 import zmq
 import pickle
+import json
+import numpy as np
+from tensorflow import keras
+from tensorflow.keras import layers,Sequential,models
+
+import os.path
 
 calibrateLowerStepSize = 10
 calibrateLowerTotalStepsCount = 20
@@ -173,6 +179,7 @@ def scanFace(max_db):
     else:
         moveMotor(Motors.UPPER.value, ((maxStepsOfUpper*scanningUpperStepSize)/2), Direction.POSITIVE.value)
     return dResult,uResult,lResult
+    
 def get_reading_message(): 
     context = zmq.Context()
     consumer_receiver = context.socket(zmq.SUB)
@@ -182,6 +189,8 @@ def get_reading_message():
     consumer_receiver.close()    
     print(len(frame["FRAME"]))    
     return frame["FRAME"]
+
+    
 def get_dist_mag(calibiration_mode, max_db):
     """
     Processing the last line in "radar_readings.txt" and returning the peak (db) of the reading using cfar (index of the peak , distance value , db)
@@ -230,8 +239,9 @@ def scan2D_lower(calibiration_mode, max_db):
     lCounter = 0
     xResult = []
     yResult = []
+    moveMotor(Motors.LOWER.value, ((maxStepsOfLower*scanningLowerStepSize)/2), Direction.NEGATIVE.value)
     previous_distance = -1
-    while(lCounter != maxStepsOfLower): 
+    while(lCounter <= maxStepsOfLower): 
         global_counter = lCounter      
         get_dist_mag(calibiration_mode, max_db) #getting the reading
         # distance = global_distance
@@ -252,8 +262,7 @@ def scan2D_lower(calibiration_mode, max_db):
         lCounter += 1
         # previous_distance = distance
 
-
-    moveMotor(Motors.LOWER.value, scanningLowerStepSize * maxStepsOfLower, Direction.NEGATIVE.value) #returning to the original point
+    moveMotor(Motors.LOWER.value, ((maxStepsOfLower*scanningLowerStepSize)/2), Direction.NEGATIVE.value)
     return xResult,yResult
 
 
@@ -282,15 +291,16 @@ def calibrate_scene():
     output : maximum db in the scene
     """
     global readings, distances  # list of db(y) , distance(x)
-    moveMotor(Motors.LOWER.value, ((maxStepsOfLower*scanningLowerStepSize)/2), Direction.NEGATIVE.value) #move from center of the object to the beginning of the object
     scan2D_lower(True,0) # scan 2d 
-    moveMotor(Motors.LOWER.value, ((maxStepsOfLower*scanningLowerStepSize)/2), Direction.POSITIVE.value) #move back to the center
     readings_np = np.array(readings) 
     max_db = np.max(readings_np) # getting max db
     readings = []
     distances = []
     return max_db
 
+def make_prediction(reading):
+        result = g_model.predict(np.reshape(reading,(1,len(reading))))>.8
+        return result
 
 def save_3d_experement(x,y,z,name):
     """
@@ -334,7 +344,7 @@ def save_dist_mag_experenemt(mag,dist,name):
     file.close()
 
     #saves step numbers in "3D_Experements" folder with name of "experiment_name+_dist.txt"
-    file = open("3D_Experements/"+name+"_dist.txt", "a")
+    file = open("DM_Experements/"+name+"_dist.txt", "a")
     np.savetxt(file, dist)
     file.close()
 
@@ -349,17 +359,18 @@ def _3D_mapping(exp_name):
     """
     ##gets the maximum peak of db in the scene to estimate average value of db to eliminate noise
     #radar starts at the middle of the object , and after finishing returns back to the original point (middle of the object)
-    max_db = calibrate_scene()  
-    print ("MAX_dB = ",max_db)
+    # max_db = 0
+    # while max_db == 0 :
+    #     max_db = calibrate_scene()  
+    # print ("MAX_dB = ",max_db)
 
     ##moving the radar to the left (or right) with number of steps of scanning / 2
     #then make a 3d scan
     #then return back to the center of the object
-    dist,uAngel,lAngel = scanFace(max_db)
+    dist,uAngel,lAngel = scanFace(0)
 
     ## getting the x , y , z axis of the points read by the radar
     x , y , z = np.array(dist)*np.cos(uAngel)*np.sin(lAngel) , np.array(dist)*np.cos(uAngel)*np.cos(lAngel) , np.array(dist)*np.sin(uAngel)
-    print("cos ")
     my_sample_x = np.array(x)
     my_sample_y = np.array(y)
     my_sample_z = np.array(z)
@@ -370,16 +381,16 @@ def _3D_mapping(exp_name):
     save_3d_experement(np.array(dist),np.array(uAngel),np.array(lAngel),exp_name)
 
     ##getting the min and max to estimate the depth of colors , then drawing the points
-    max_y = np.amax(my_sample_y)
-    min_y = np.amin(my_sample_y)
-    df = pd.DataFrame(my_sample_x,columns=['X (mm)'])
-    df['Y (mm)'] = my_sample_y
-    df['Z (mm)'] = my_sample_z
-    df['Depth'] = my_sample_y
-    color = px.colors.sequential.Rainbow[::-1]
-    df.head()
-    fig = px.scatter_3d(df, x='X (mm)', y='Y (mm)', z='Z (mm)', color='Depth', title="ٌRadar Point Cloud" , range_color=[max_y,min_y],color_continuous_scale=color)
-    fig.show()
+    # max_y = np.amax(my_sample_y)
+    # min_y = np.amin(my_sample_y)
+    # df = pd.DataFrame(my_sample_x,columns=['X (mm)'])
+    # df['Y (mm)'] = my_sample_y
+    # df['Z (mm)'] = my_sample_z
+    # df['Depth'] = my_sample_y
+    # color = px.colors.sequential.Rainbow[::-1]
+    # df.head()
+    # fig = px.scatter_3d(df, x='X (mm)', y='Y (mm)', z='Z (mm)', color='Depth', title="ٌRadar Point Cloud" , range_color=[max_y,min_y],color_continuous_scale=color)
+    # fig.show()
 
  
 
@@ -391,6 +402,8 @@ def _mag_dist_mapping(exp_name,scaning_number = 2 ,increase_upper_angel = False)
              increase_upper_angel --> true --> move the upper motor 1 step each time I repeat experiment
                                       false --> don`t move upper motor each time I repeat experiment
     """
+
+    global readings, distances  # list of db(y) , distance(x)
     max_db = calibrate_scene ()
     print ("MAX_dB = ",max_db)
 
@@ -412,6 +425,7 @@ def _mag_dist_mapping(exp_name,scaning_number = 2 ,increase_upper_angel = False)
         plt.ylabel('distance in (mm)')
         plt.grid(True)
         plt.suptitle('Beam Pattern', fontsize=25)
+        save_dist_mag_experenemt(readings,distances,exp_name)
     else:
         for i in range(scaning_number):
             # scan2D_lower(False, max_db)
@@ -439,10 +453,17 @@ def _mag_dist_mapping(exp_name,scaning_number = 2 ,increase_upper_angel = False)
     plt.show()  
 
 
+def Scan3d(file_name):    
+    _3D_mapping(file_name)
+
+
+radar = Radar()
+arduino = set_up()
+
 if __name__ == "__main__":
 
-    radar = Radar()
-    arduino = set_up()
+    # radar = Radar()
+    # arduino = set_up()
     # radar.setup_radar()
     # radar.setup_radar_system_configuration()
     # radar.setup_radar_pll_configuration()
@@ -456,16 +477,16 @@ if __name__ == "__main__":
     # t1.join()
 
     # move_with_keyboard ()
-    file_name = input("enter experment name")
-    _3D_mapping(file_name)
-    #_mag_dist_mapping("corner")
+    file_name = input("enter experment name \n")
+    #_3D_mapping(file_name)
+    _mag_dist_mapping(file_name,1,False)
 
 
 
 
 
 
-#######################################unwanted_for_now#######################################
+####################################### unwanted_for_now #######################################
 # """
 # if face was found return the direction of the lower motor 
 # else return none
