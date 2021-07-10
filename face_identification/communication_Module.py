@@ -203,7 +203,8 @@ def get_dist_mag(calibiration_mode, max_db):
     output : (peak_index , distance_value , db_value)
     """
     global readings, global_counter, counter_depth_get_dist_mag, max_depth
-    frame = get_reading_message()
+    # frame = get_reading_message()
+    frame = trigger_get_data()
     index, distance, db_frame = radar.detect_peaks(frame, calibiration_mode, max_db)
     # index, distance, db_frame = radar.get_max_magnitude_in_range(frame)
     print("step number = ",global_counter," with db value = ", db_frame, " with a distance = ",distance)
@@ -301,6 +302,18 @@ def calibrate_scene():
 def make_prediction(reading):
         result = g_model.predict(np.reshape(reading,(1,len(reading))))>.8
         return result
+
+def trigger_get_data():
+    print("getting the reading now")
+    radar.trigger_reading()
+    while(True):
+        frame = radar.read_magnitude()
+        if frame != None:
+            print(len(frame))
+            print(frame)
+            radar.clear_buffer()
+            break
+    return frame
 
 def save_3d_experement(x,y,z,name):
     """
@@ -458,6 +471,7 @@ def Scan3d(file_name):
 
 
 radar = Radar()
+radar.setup_radar()
 arduino = set_up()
 
 if __name__ == "__main__":

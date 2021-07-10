@@ -32,7 +32,7 @@ class Radar():
         self.threashold = self.configuration_json["THRESHOLD"]
         self.frame_size = self.configuration_json["FRAME_SIZE"]
         # self.g_model = models.load_model('model_naive3.h5')
-        self.f_model = models.load_model('face_model.h5')
+        # self.f_model = models.load_model('face_model.h5')
         '''
         define a connection through the serial port
         '''
@@ -66,7 +66,13 @@ class Radar():
         '''
             clear buffer of the pc of the communication
         '''
-        self.ser.read_all()
+        # self.ser.read_all()
+        self.ser.flushInput()
+    def check_buffer(self):
+        '''
+            clear buffer of the pc of the communication
+        '''
+        return self.ser.inWaiting()
 
     def store_readings(self, file_name):
         num = self.configuration_json["NUMBER_OF_TRAIN_SET"]
