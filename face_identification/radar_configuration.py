@@ -66,8 +66,9 @@ class Radar():
         '''
             clear buffer of the pc of the communication
         '''
-        # self.ser.read_all()
-        self.ser.flushInput()
+        return self.ser.read_all(), self.ser.in_waiting
+        # self.ser.reset_input_buffer()
+        # self.ser.reset_output_buffer()
     def check_buffer(self):
         '''
             clear buffer of the pc of the communication
@@ -294,7 +295,7 @@ class Radar():
         max_index = min_index_range + max_index
         max_distance = max_index * self.bin_resolution
         max_magnitude = frame[max_index]
-        return makx_index,max_distance,max_magnitude
+        return max_index,max_distance,max_magnitude
 
 
     def make_prediction(self,reading,model):
@@ -313,12 +314,13 @@ class Radar():
         """
         num_train = self.background_number
         num_guard = self.guard_number
-
+        
         y= np.array(frame)
-        y =y+ np.abs(np.min(y))
-        x = np.arange(y.size)*self.bin_resolution   
-        print(x)
-        print(self.bin_resolution)  
+        # y =y+ np.abs(np.min(y))
+        # print("Ahmed")
+        # print(np.min(y))
+        # print(y)
+        x = np.arange(y.size)*self.bin_resolution  
         #print(x)  
         num_cells = y.size
         num_train_half = round(num_train / 2)
@@ -338,31 +340,23 @@ class Radar():
             #threshold = alpha * p_noise
             #y[i] >threshold
             if calibiration_mode == True:
-
-
                 if  (frame[i] >= self.threashold) and x[i]>self.min_distance and x[i]<self.max_distance  and face_body_prediction:
-                    # print(frame[i] >= self.threashold)
-                    # print(x[i]>self.min_distance)
-                    # print(x[i]<self.max_distance)
-                    # print(face_body_prediction)
-                    print("FFFFFFFFFFFFFF")
-                    print(x[i])
                     peak_idx.append(i)
-                    print(peak_idx)
             else:
                 if (frame[i] >= self.threashold) and x[i]>self.min_distance and x[i]<self.max_distance  and face_body_prediction:
                     peak_idx.append(i)
             # print("size of x",len(x))
         max_index = 0
-        y_max = -140
-        print(peak_idx)
+        y_max = -80
+        # print("###################################################")
+        # print (peak_idx)
         for index in peak_idx:
             # print ("inside peak detect")
-            
             if y[index] > y_max:
                 max_index = index
                 y_max = y[index]
-        if y_max == -140:            
+                # print (y[index])
+        if y_max == -80:            
             return None,None,None
         else:            
             return max_index,x[max_index],frame[max_index]

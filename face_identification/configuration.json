@@ -1,19 +1,19 @@
 
 {
     "ARDUINO_PORT":"COM7",
-    "SENSOR_PORT":"COM3" ,
+    "SENSOR_PORT":"COM10" ,
     "SENSOR_FORMAT":"TSV" ,
     "BIN_RESOLUTION":4,
     "STATE_MIN":0,
     "STATE_MAX":2,
     "FRAME_SIZE":512,
-    "THRESHOLD":-150,
+    "THRESHOLD":-80,
     "BAUD_RATE":1000000,
     "PORT" : "5556",
     "MAX_DEPTH":0, 
     "RANGE_OF_INTEREST":{
-        "MIN_DISTANCE":250,
-        "MAX_DISTANCE":800
+        "MIN_DISTANCE":300,
+        "MAX_DISTANCE":1000
     },    
     "NUMBER_OF_TRAIN_SET":10000,
     "NUMBER_SAMPLES":512,
