@@ -294,7 +294,7 @@ class Radar():
         max_index = min_index_range + max_index
         max_distance = max_index * self.bin_resolution
         max_magnitude = frame[max_index]
-        return max_index,max_distance,max_magnitude
+        return makx_index,max_distance,max_magnitude
 
 
     def make_prediction(self,reading,model):
