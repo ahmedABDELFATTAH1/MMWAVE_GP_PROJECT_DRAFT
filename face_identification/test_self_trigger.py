@@ -4,7 +4,7 @@ from radar_configuration import *
 import serial
 from scipy import stats
 import numpy as np
-NUMBER_SAMPLES = 50
+NUMBER_SAMPLES = 1
 
 distances = []
 
@@ -25,8 +25,9 @@ def scan():
         intx = [ int(fr) for fr in frame]
     else:
         print("eeeeeeerrrrrrrrrrooooorrrrrrrrr")
+    print (intx)
     index, distance, db_frame = radar.detect_peaks(intx, True, 0)
-    # print(" with db value = ", db_frame, " with a distance = ",distance)
+    print(" with db value = ", db_frame, " with a distance = ",distance)
     distances.append(distance)
 
 ser = serial.Serial()
@@ -43,14 +44,14 @@ if __name__=="__main__":
     #         print("getting the reading now")
     for i in range (NUMBER_SAMPLES):
         scan()
-    z = np.abs(stats.zscore(np.array(distances)))
-    # print(np.where(z > 3))
-    # print(z)
-    indecies = ~np.logical_or((z>=1), (z<=-1))
-    # print(indecies)
-    # print(z[indecies])
-    distances = np.array(distances)
+    # z = np.abs(stats.zscore(np.array(distances)))
+    # # print(np.where(z > 3))
+    # # print(z)
+    # indecies = ~np.logical_or((z>=1), (z<=-1))
+    # # print(indecies)
+    # # print(z[indecies])
+    # distances = np.array(distances)
     # print(distances[indecies])
-    print (np.average(distances[indecies]))
+    # print (np.average(distances[indecies]))
     # print("good bye")
 

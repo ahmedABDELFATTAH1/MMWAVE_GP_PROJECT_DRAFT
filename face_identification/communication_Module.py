@@ -85,7 +85,7 @@ def set_up():
     setting up the arduino baud rate and port
     """
     arduino = serial.Serial()
-    arduino.baudrate = 9600
+    arduino.baudrate =
     arduino.port = arduino_port
     arduino.open()
     print(arduino.is_open)
