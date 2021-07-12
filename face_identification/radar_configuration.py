@@ -6,12 +6,14 @@ import zmq
 import matplotlib.pyplot as plt
 import json
 import numpy as np
+from scipy import stats
 from tensorflow import keras
 from tensorflow.keras import layers,Sequential,models
 
 import os.path
 
-
+correct_frames = 0
+dropped_frames = 0 
 class Radar():
     '''
     this is the radar configuration class this will implement all low level communication with the radar sensor
@@ -66,7 +68,7 @@ class Radar():
         '''
             clear buffer of the pc of the communication
         '''
-        return self.ser.read_all(), self.ser.in_waiting
+        return self.ser.read_all()
         # self.ser.reset_input_buffer()
         # self.ser.reset_output_buffer()
     def check_buffer(self):
@@ -168,7 +170,7 @@ class Radar():
                 try :
                     frame = [int(i) for i in splittedLine[3:len(splittedLine)-1]]
                     if (len(frame) == 512):
-                        print (len(frame))
+                        # print (len(frame))
                         file.write(str(frame)+"\n") 
                         file.close()
                     else:
@@ -254,38 +256,72 @@ class Radar():
         '''
         this function for reading a frame from  the radar that contains the magintude information
         '''
+        global dropped_frames,correct_frames
+        correct_frames+=1
         #print(line)
+        # self.ser.reset_input_buffer()
+        # while self.ser.in_waiting <2600:
+        #     print("waiting")
+        #     pass
         line = self.ser.readline()  # read a line from the sensor
+        # print ("in waiting :: ",self.ser.in_waiting)
+        # line =""
+        # while len(line) == 0:
+        #     line = self.clear_buffer()
         # print(line)
+        # print ("wanted length :: ", len(line))
 
         newLine = line.decode("utf-8")  
         # print (newLine)           
         # !R \t counter \t frame_size \t 109 \t 255 0-->-140 /r/n
-        
+        if newLine == "I am Easy\r\n":
+            return None
+        if newLine == "Front End \x02\r\n":
+            return None
+    
+        # splittedLine = newLine.split("!R")
+
+        # print (splittedLine)
         splittedLine = newLine.split("\t")
         # print(splittedLine[0])
         if (splittedLine[0] != '!R'):  # check for start frame
+            print("\'!R\' is missing, frame has been dropped !!!!!")
+            dropped_frames+=1
             return None
-        index = -1
-        try:
-            # print("here")
-            index = splittedLine.index('\r\n')  # seach for the end frame
-            # print(index)
-        except ValueError as e:
-            #print(e)
-            return None
-        if (index == -1):
-            return None
-        else:
+        if (splittedLine[len(splittedLine)-1] == '\r\n'):
+            print ("frame number  :: ",splittedLine[1])
+            frame = splittedLine[3:len(splittedLine)-1]
             try:
-                frame = [int(i)
-                         for i in splittedLine[3:index]]  # get the frame
-                #print("message",splittedLine[0:4])
-                if(len(frame) != self.frame_size):
-                    return None
-                return frame
+                intx = [ int(fr) for fr in frame]
             except:
+                print("double -ve are detected\"like -20-21\", frame has been dropped !!!!!")
+                dropped_frames+=1
                 return None
+            return intx
+        else:
+            print("\'\\r\\n\' are missing, frame has been dropped ")
+            dropped_frames+=1
+        # index = -1
+        # try:
+        #     # print("here")
+        #     index = splittedLine.index('\r\n')  # seach for the end frame
+        #     # print(index)
+        # except ValueError as e:
+        #     #print(e)
+        #     return None
+        # if (index == -1):
+        #     return None
+        # else:
+            # try:
+            #     frame = [int(i)
+            #              for i in splittedLine[3:index]]  # get the frame
+            #     #print("message",splittedLine[0:4])
+            #     if(len(frame) != self.frame_size):
+            #         return None
+            #     return frame
+            # except:
+            #     return None
+            
         return None
 
     def get_max_magnitude_in_range(self,frame):
@@ -347,23 +383,51 @@ class Radar():
                     peak_idx.append(i)
             # print("size of x",len(x))
         max_index = 0
-        y_max = -80
+        y_max = -200
         # print("###################################################")
         # print (peak_idx)
         for index in peak_idx:
             # print ("inside peak detect")
+            # print ("dis :: " ,x[index] ,"mag :: ",y[index])
             if y[index] > y_max:
                 max_index = index
                 y_max = y[index]
-                # print (y[index])
-        if y_max == -80:            
+                
+        if y_max == -200:            
             return None,None,None
         else:            
             return max_index,x[max_index],frame[max_index]
          
+    def access_radar(self,num):
+        frame_payloads = []
+        distances = []
+        db_frames = []
+        for i in range(num):
+            frame_payloads.append(self.get_reading())
 
-
-
+        for frame in frame_payloads:
+            index, distance, db_frame = self.detect_peaks(frame, True, 0)
+            distances.append(distance)
+            db_frames.append(db_frame)
+        print(distances)
+        z = np.abs(stats.zscore(np.array(distances)))
+        # print(np.where(z > 3))
+        # print(z)
+        indecies = ~np.logical_or((z>=1), (z<=-1))
+        # print(indecies)
+        # print(z[indecies])
+        distances = np.array(distances)
+        print(distances[indecies])
+        avrg_dis = np.average(distances[indecies])
+        
+        # print(indecies)
+        # print(z[indecies])
+        db_frames = np.array(db_frames)
+        print(db_frames[indecies])
+        avrg_db = np.average(db_frames[indecies])
+        
+        return "ahhhhhh ya ta7a ya trash",avrg_dis,avrg_db
+    
 if __name__ == "__main__":
     radar = Radar()
     radar.setup_radar() 
@@ -371,17 +435,18 @@ if __name__ == "__main__":
         context = zmq.Context()
         zmq_socket = context.socket(zmq.PUB)    
         zmq_socket.bind("tcp://127.0.0.1:5558")
-        count=0
-        # Start your result manager and workers before you start your producers
+        # count=0
         while True:
             frame_payload = radar.get_reading()
-            print(len(frame_payload))
-            print(count)
-            count+=1
+            # print(len(frame_payload))
+            # print(count)
+            # count+=1
             frame = {
                 "FRAME":frame_payload
             }
             zmq_socket.send_json(frame)
+            print("#correct frames :: ", correct_frames)
+            print("#dropped farmes :: ", dropped_frames)
             # index,distance,magnitude = radar.detect_peaks(frame["FRAME"],True,0)
             # print(distance)
 

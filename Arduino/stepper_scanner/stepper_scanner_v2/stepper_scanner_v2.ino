@@ -3,15 +3,17 @@
 #include <SPI.h>
 
 // The X Stepper pins
-#define STEPPER1_DIR_PIN 2
-#define STEPPER1_STEP_PIN 5
+#define STEPPER1_DIR_PIN 5
+#define STEPPER1_STEP_PIN 2
 // The Y stepper pins
-#define STEPPER2_DIR_PIN 3
-#define STEPPER2_STEP_PIN 6
+#define STEPPER2_DIR_PIN 6
+#define STEPPER2_STEP_PIN 3
 
+#define MOTOR_TYPE  1
+#define MOTOR_ENABLE 8
 // Define some steppers and the pins the will use
-AccelStepper lower_motor(AccelStepper::DRIVER, STEPPER1_STEP_PIN, STEPPER1_DIR_PIN);
-AccelStepper upper_motor(AccelStepper::DRIVER, STEPPER2_STEP_PIN, STEPPER2_DIR_PIN);
+AccelStepper lower_motor(MOTOR_TYPE, STEPPER1_STEP_PIN, STEPPER1_DIR_PIN);
+AccelStepper upper_motor(MOTOR_TYPE, STEPPER2_STEP_PIN, STEPPER2_DIR_PIN);
 
 int  data;
 String dataString;
@@ -35,8 +37,11 @@ void setup()
   
   upper_motor.setCurrentPosition(0);
   lower_motor.setCurrentPosition(0);
-    
-  Serial.begin(9600);
+  
+  pinMode (MOTOR_ENABLE,OUTPUT);
+  digitalWrite(MOTOR_ENABLE,LOW);
+  
+  Serial.begin(1000000);
 }
 
 void loop()

@@ -34,7 +34,7 @@ configuration_json = json.load(configuration_file)
 arduino_port = configuration_json["ARDUINO_PORT"] #arduino port number
 port = configuration_json["PORT"] #radar port number
 max_depth = configuration_json["MAX_DEPTH"] #max depth of tries to get readings
-
+baud_rate = configuration_json["BAUD_RATE"]
 
 
 motors_delay  = configuration_json["MOTORS_DELAY"] #Delay of each read
@@ -85,7 +85,7 @@ def set_up():
     setting up the arduino baud rate and port
     """
     arduino = serial.Serial()
-    arduino.baudrate =
+    arduino.baudrate = baud_rate
     arduino.port = arduino_port
     arduino.open()
     print(arduino.is_open)
@@ -204,9 +204,11 @@ def get_dist_mag(calibiration_mode, max_db):
     """
     global readings, global_counter, counter_depth_get_dist_mag, max_depth
     # frame = get_reading_message()
-    frame = trigger_get_data()
-    index, distance, db_frame = radar.detect_peaks(frame, calibiration_mode, max_db)
+    # frame = trigger_get_data()
+    # index, distance, db_frame = radar.detect_peaks(frame, calibiration_mode, max_db)
     # index, distance, db_frame = radar.get_max_magnitude_in_range(frame)
+
+    index, distance, db_frame = radar.access_radar(10)
     print("step number = ",global_counter," with db value = ", db_frame, " with a distance = ",distance)
     if (db_frame != None):  #if a frame is detected
         distances.append(distance) #save distance
@@ -216,7 +218,7 @@ def get_dist_mag(calibiration_mode, max_db):
         return index, distance, db_frame
     elif counter_depth_get_dist_mag < max_depth:        
         counter_depth_get_dist_mag += 1
-        return get_dist_mag(calibiration_mode, max_db)
+        return get_dist_mag(calibiration_mode, max_db) 
     else:  #if I have tried max_depth times and got no readings I will return -1 which indecates that I have no reading
         distances.append(0)
         readings.append(0)
@@ -472,12 +474,13 @@ def Scan3d(file_name):
     _3D_mapping(file_name)
 
 
-radar = Radar()
-radar.setup_radar()
-arduino = set_up()
+
 
 if __name__ == "__main__":
 
+    radar = Radar()
+    radar.setup_radar()
+    arduino = set_up()
     # radar = Radar()
     # arduino = set_up()
     # radar.setup_radar()
@@ -494,8 +497,8 @@ if __name__ == "__main__":
 
     # move_with_keyboard ()
     file_name = input("enter experment name \n")
-    #_3D_mapping(file_name)
-    _mag_dist_mapping(file_name,1,False)
+    _3D_mapping(file_name)
+    # _mag_dist_mapping(file_name,1,False)
 
 
 
