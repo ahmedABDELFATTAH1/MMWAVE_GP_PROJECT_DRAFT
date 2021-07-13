@@ -1,7 +1,7 @@
 
 {
     "ARDUINO_PORT":"COM8",
-    "SENSOR_PORT":"COM12" ,
+    "SENSOR_PORT":"COM13" ,
     "SENSOR_FORMAT":"TSV" ,
     "BIN_RESOLUTION":4,
     "STATE_MIN":0,
@@ -12,8 +12,8 @@
     "PORT" : "5556",
     "MAX_DEPTH":0, 
     "RANGE_OF_INTEREST":{
-        "MIN_DISTANCE":10,
-        "MAX_DISTANCE":1400
+        "MIN_DISTANCE":250,
+        "MAX_DISTANCE":650
     },    
     "NUMBER_OF_TRAIN_SET":10000,
     "NUMBER_SAMPLES":512,
@@ -29,8 +29,8 @@
     "STEP_ANGLE":0.45,
     "LOWER_STEP_SIZE":4,
     "UPPER_STEP_SIZE":4,
-    "MAX_ANGLE_UPPER":45,
-    "MAX_ANGLE_LOWER":45,
+    "MAX_ANGLE_UPPER":36,
+    "MAX_ANGLE_LOWER":36,
     "MOTORS_DELAY":0.0,
 
     "_comment_radar": "Radar config section .....",
