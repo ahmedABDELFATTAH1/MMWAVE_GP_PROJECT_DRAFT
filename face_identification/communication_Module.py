@@ -330,7 +330,7 @@ def trigger_get_data():
             break
     return frame
 
-def save_3d_experement(x,y,z,name):
+def save_3d_experement(x,y,z,name,folder):
     """
     saves the x , y , z points of an experiment in an external file
 
@@ -341,17 +341,17 @@ def save_3d_experement(x,y,z,name):
 
     """
     #saves x points in "3D_experements" folder with name of "experiment_name+_x.txt"
-    file = open("3D_Experements/"+name+"_x.txt", "a")
+    file = open(folder+name+"_x.txt", "a")
     np.savetxt(file, x)
     file.close()
 
     #saves y points in "3D_experements" folder with name of "experiment_name+_y.txt"
-    file = open("3D_Experements/"+name+"_y.txt", "a")
+    file = open(folder+name+"_y.txt", "a")
     np.savetxt(file, y)
     file.close()
 
     #saves z points in "3D_experements" folder with name of "experiment_name+_z.txt"
-    file = open("3D_Experements/"+name+"_z.txt", "a")
+    file = open(folder+name+"_z.txt", "a")
     np.savetxt(file, z)
     file.close()
 
@@ -421,7 +421,7 @@ def _3D_mapping(exp_name):
     # fig.show()
 
 
-def _3D_collect_data(exp_name,number_examples):
+def _3D_collect_data(exp_name,number_examples,folder):
     dist,uAngel,lAngel = scanFace(0)
     for i in range(number_examples):
         example_distances = []
@@ -432,7 +432,7 @@ def _3D_collect_data(exp_name,number_examples):
         my_sample_x = np.array(x)
         my_sample_y = np.array(y)
         my_sample_z = np.array(z)
-        save_3d_experement(np.array(example_distances),np.array(uAngel),np.array(lAngel),exp_name+"_"+str(i))
+        save_3d_experement(np.array(example_distances),np.array(uAngel),np.array(lAngel),exp_name+"_"+str(i),folder)
  
 
 def _mag_dist_mapping(exp_name,scaning_number = 2 ,increase_upper_angel = False):
@@ -500,6 +500,8 @@ if __name__ == "__main__":
     radar = Radar()
     radar.setup_radar()
     arduino = set_up()
+    folder = "flat_Experements/"
+    # folder = "3D_Experements/"
     # radar = Radar()
     # arduino = set_up()
     # radar.setup_radar()
@@ -517,7 +519,7 @@ if __name__ == "__main__":
     # move_with_keyboard ()
     file_name = input("enter experment name \n")
     # _3D_mapping(file_name)
-    _3D_collect_data(file_name,1000)
+    _3D_collect_data(file_name,1000,folder)
     # _mag_dist_mapping(file_name,1,False)
 
 
