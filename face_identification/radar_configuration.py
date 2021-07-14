@@ -397,7 +397,16 @@ class Radar():
             return None,None,None
         else:            
             return max_index,x[max_index],frame[max_index]
-         
+
+    def collect_n_samples(self,n_samples,n_readings):
+        distances = []
+        db_frames = []
+        for i in range (n_samples):
+            index, distance, db_frame = self.access_radar(n_readings) 
+            distances.append(distance)
+            db_frames.append(db_frame)   
+        return "error inde is used",distances,db_frames  
+
     def access_radar(self,num):
         frame_payloads = []
         distances = []
@@ -426,7 +435,7 @@ class Radar():
         print(db_frames[indecies])
         avrg_db = np.average(db_frames[indecies])
         
-        return "ahhhhhh ya ta7a ya trash",avrg_dis,avrg_db
+        return "error inde is used",avrg_dis,avrg_db
     
 if __name__ == "__main__":
     radar = Radar()

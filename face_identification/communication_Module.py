@@ -13,6 +13,7 @@ import zmq
 import pickle
 import json
 import numpy as np
+import random
 from tensorflow import keras
 from tensorflow.keras import layers,Sequential,models
 
@@ -25,9 +26,11 @@ counter_depth_get_dist_mag = 0
 
 global_counter = 0
 
+n_samples = 5
+n_readings = 5
+
 readings = []
 distances = []
-
 
 configuration_file = open('configuration.json',)
 configuration_json = json.load(configuration_file)
@@ -118,6 +121,7 @@ def scanFace(max_db):
             uResult[] --> angle of the upper motor of each reading
             lResult[] --> angle of the lower motor of each reading
     """
+    global n_samples,n_readings
     upperDirection = True
     moveU = True
     moveL = True
@@ -133,7 +137,11 @@ def scanFace(max_db):
     while(moveL): 
         previous_distance = -1
         while(moveU):
-            index,distance,db_frame = get_dist_mag(False, max_db)
+            # for classification 
+            # index,distance,db_frame = get_dist_mag(False, max_db)
+
+            # for collecting data from single point 
+            index,distance,db_frame = radar.collect_n_samples(n_samples,n_readings)
             # distance = error_correction(previous_distance , distance)
             print("######################################")
             print("upperMoter.distance = ",distance)
@@ -161,7 +169,11 @@ def scanFace(max_db):
             previous_distance = distance
         moveU = True  #to enter the next column
         upperDirection = not upperDirection #toggle direction of upper motor
-        index,distance,db_frame = get_dist_mag(False, max_db)
+        # for classification 
+        # index,distance,db_frame = get_dist_mag(False, max_db)
+
+        # for collecting data from single point 
+        index,distance,db_frame = radar.collect_n_samples(n_samples,n_readings)
         # distance = error_correction(previous_distance , distance)
         if (distance != -1):
             dResult.append(distance)
@@ -190,7 +202,7 @@ def get_reading_message():
     print(len(frame["FRAME"]))    
     return frame["FRAME"]
 
-    
+
 def get_dist_mag(calibiration_mode, max_db):
     """
     Processing the last line in "radar_readings.txt" and returning the peak (db) of the reading using cfar (index of the peak , distance value , db)
@@ -408,6 +420,19 @@ def _3D_mapping(exp_name):
     # fig = px.scatter_3d(df, x='X (mm)', y='Y (mm)', z='Z (mm)', color='Depth', title="ٌRadar Point Cloud" , range_color=[max_y,min_y],color_continuous_scale=color)
     # fig.show()
 
+
+def _3D_collect_data(exp_name,number_examples):
+    dist,uAngel,lAngel = scanFace(0)
+    for i in range(number_examples):
+        example_distances = []
+        for j in range (len(dist)):
+            example_distances.append(random.choice(dist[j]))    
+        ## getting the x , y , z axis of the points read by the radar
+        x , y , z = np.array(example_distances)*np.cos(uAngel)*np.sin(lAngel) , np.array(example_distances)*np.cos(uAngel)*np.cos(lAngel) , np.array(example_distances)*np.sin(uAngel)
+        my_sample_x = np.array(x)
+        my_sample_y = np.array(y)
+        my_sample_z = np.array(z)
+        save_3d_experement(np.array(example_distances),np.array(uAngel),np.array(lAngel),exp_name+"_"+str(i))
  
 
 def _mag_dist_mapping(exp_name,scaning_number = 2 ,increase_upper_angel = False):
@@ -470,12 +495,6 @@ def _mag_dist_mapping(exp_name,scaning_number = 2 ,increase_upper_angel = False)
     plt.show()  
 
 
-def Scan3d(file_name):    
-    _3D_mapping(file_name)
-
-
-
-
 if __name__ == "__main__":
 
     radar = Radar()
@@ -497,7 +516,8 @@ if __name__ == "__main__":
 
     # move_with_keyboard ()
     file_name = input("enter experment name \n")
-    _3D_mapping(file_name)
+    # _3D_mapping(file_name)
+    _3D_collect_data(file_name,1000)
     # _mag_dist_mapping(file_name,1,False)
 
 
