@@ -27,8 +27,8 @@
 
     "_comment_motors": "Motors config section .....",
     "STEP_ANGLE":0.45,
-    "LOWER_STEP_SIZE":4,
-    "UPPER_STEP_SIZE":4,
+    "LOWER_STEP_SIZE":3,
+    "UPPER_STEP_SIZE":3,
     "MAX_ANGLE_UPPER":27,
     "MAX_ANGLE_LOWER":36,
     "MOTORS_DELAY":0.0,
