@@ -220,7 +220,7 @@ def get_dist_mag(calibiration_mode, max_db):
     # index, distance, db_frame = radar.detect_peaks(frame, calibiration_mode, max_db)
     # index, distance, db_frame = radar.get_max_magnitude_in_range(frame)
 
-    index, distance, db_frame = radar.access_radar(10)
+    index, distance, db_frame = radar.access_radar(5)
     print("step number = ",global_counter," with db value = ", db_frame, " with a distance = ",distance)
     if (db_frame != None):  #if a frame is detected
         distances.append(distance) #save distance
@@ -377,7 +377,7 @@ def save_dist_mag_experenemt(mag,dist,name):
     file.close()
 
 
-def _3D_mapping(exp_name):
+def _3D_mapping(exp_name, folder):
     """
     Calibrates the system to get max db ,
     then 3d scans the scene infront of the radar ,
@@ -406,7 +406,7 @@ def _3D_mapping(exp_name):
     ##saving the x , y ,z points  in an external file
     #save_3d_experement(my_sample_x,my_sample_y,my_sample_z,exp_name)
 
-    save_3d_experement(np.array(dist),np.array(uAngel),np.array(lAngel),exp_name)
+    save_3d_experement(np.array(dist),np.array(uAngel),np.array(lAngel),exp_name, folder)
 
     ##getting the min and max to estimate the depth of colors , then drawing the points
     # max_y = np.amax(my_sample_y)
@@ -518,7 +518,7 @@ if __name__ == "__main__":
 
     # move_with_keyboard ()
     file_name = input("enter experment name \n")
-    # _3D_mapping(file_name)
+    # _3D_mapping(file_name, folder)
     _3D_collect_data(file_name,1000,folder)
     # _mag_dist_mapping(file_name,1,False)
 
