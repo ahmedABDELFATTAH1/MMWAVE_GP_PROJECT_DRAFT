@@ -433,7 +433,7 @@ class Radar():
         
         # print(indecies)
         # print(z[indecies])
-        db_frames = np.array(db_frames)
+        db_frames = np.array(db_frames).astype(float)
         print(db_frames[indecies])
         avrg_db = np.average(db_frames[indecies])
         

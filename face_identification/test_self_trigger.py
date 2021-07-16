@@ -42,49 +42,50 @@ def scan():
 
 if __name__=="__main__":
     print ("ahmed ")
-    folder_indx = 0 
-    exp_name = "waleed_14_7_136"
-    folder = ["3D_Experements", "flat_Experements"]
-    dist = np.loadtxt(folder[folder_indx]+"/"+exp_name+"_x.txt")
-    upper_angle = np.loadtxt(folder[folder_indx]+"/"+exp_name+"_y.txt")
-    lower_angle = np.loadtxt(folder[folder_indx]+"/"+exp_name+"_z.txt")
-
-
+    # folder_indx = 0 
+    # exp_name = "waleed_14_7_136"
+    # folder = ["3D_Experements", "flat_Experements"]
+    # dist = np.loadtxt(folder[folder_indx]+"/"+exp_name+"_x.txt")
+    # upper_angle = np.loadtxt(folder[folder_indx]+"/"+exp_name+"_y.txt")
+    # lower_angle = np.loadtxt(folder[folder_indx]+"/"+exp_name+"_z.txt")
+    db_frames = [-70,-70,-72,-71]
+    db_frames = np.array(db_frames)
+    avrg_db = np.average(db_frames)
 
     #x , y , z = np.array(dist)*np.cos(uAngel)*np.sin(lAngel) , np.array(dist)*np.cos(uAngel)*np.cos(lAngel) , np.array(dist)*np.sin(uAngel)
 
-    my_sample_x = np.array(dist)*np.cos(upper_angle)*np.sin(lower_angle)
-    my_sample_y =  np.array(dist)*np.cos(upper_angle)*np.cos(lower_angle)
-    my_sample_z =  np.array(dist)*np.sin(upper_angle)
-    my_sample_x = my_sample_x[~np.isnan(my_sample_x)]
-    my_sample_y = my_sample_y[~np.isnan(my_sample_y)]
-    my_sample_z = my_sample_z[~np.isnan(my_sample_z)]
+    # my_sample_x = np.array(dist)*np.cos(upper_angle)*np.sin(lower_angle)
+    # my_sample_y =  np.array(dist)*np.cos(upper_angle)*np.cos(lower_angle)
+    # my_sample_z =  np.array(dist)*np.sin(upper_angle)
+    # my_sample_x = my_sample_x[~np.isnan(my_sample_x)]
+    # my_sample_y = my_sample_y[~np.isnan(my_sample_y)]
+    # my_sample_z = my_sample_z[~np.isnan(my_sample_z)]
 
-    # print (type(my_sample_z.tolist()))
+    # # print (type(my_sample_z.tolist()))
 
-    points = np.array([my_sample_x.tolist(), my_sample_y.tolist(), my_sample_z.tolist()])
-    print(points.shape)
-    pcd = o3d.geometry.PointCloud()
-    pcd.points = o3d.utility.Vector3dVector(points[:,:3])
-    o3d.visualization.draw_geometries([pcd])
-    # radar = Radar()
-    # radar.setup_radar()
-    # val = ""
-    # frame = []
-    # while val != "e":
-    #     val = input("Enter your value: ") 
-    #     if (val == "t"):
-    #         print("getting the reading now")
-    # for i in range (NUMBER_SAMPLES):
-    #     scan()
-    # z = np.abs(stats.zscore(np.array(distances)))
-    # # print(np.where(z > 3))
-    # # print(z)
-    # indecies = ~np.logical_or((z>=1), (z<=-1))
-    # # print(indecies)
-    # # print(z[indecies])
-    # distances = np.array(distances)
-    # print(distances[indecies])
-    # print (np.average(distances[indecies]))
-    # print("good bye")
+    # points = np.array([my_sample_x.tolist(), my_sample_y.tolist(), my_sample_z.tolist()])
+    # print(points.shape)
+    # pcd = o3d.geometry.PointCloud()
+    # pcd.points = o3d.utility.Vector3dVector(points[:,:3])
+    # o3d.visualization.draw_geometries([pcd])
+    # # radar = Radar()
+    # # radar.setup_radar()
+    # # val = ""
+    # # frame = []
+    # # while val != "e":
+    # #     val = input("Enter your value: ") 
+    # #     if (val == "t"):
+    # #         print("getting the reading now")
+    # # for i in range (NUMBER_SAMPLES):
+    # #     scan()
+    # # z = np.abs(stats.zscore(np.array(distances)))
+    # # # print(np.where(z > 3))
+    # # # print(z)
+    # # indecies = ~np.logical_or((z>=1), (z<=-1))
+    # # # print(indecies)
+    # # # print(z[indecies])
+    # # distances = np.array(distances)
+    # # print(distances[indecies])
+    # # print (np.average(distances[indecies]))
+    # # print("good bye")
 
