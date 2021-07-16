@@ -418,7 +418,9 @@ class Radar():
             index, distance, db_frame = self.detect_peaks(frame, True, 0)
             distances.append(distance)
             db_frames.append(db_frame)
-        print(distances)
+        print("before eliminating None values :: ", distances)
+        distances = [0 if v is None else v for v in distances]
+        print("after eliminating None values :: ", distances)
         z = np.abs(stats.zscore(np.array(distances)))
         # print(np.where(z > 3))
         # print(z)
