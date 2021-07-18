@@ -29,8 +29,8 @@
     "STEP_ANGLE":0.45,
     "LOWER_STEP_SIZE":4,
     "UPPER_STEP_SIZE":4,
-    "MAX_ANGLE_UPPER":36,
-    "MAX_ANGLE_LOWER":36,
+    "MAX_ANGLE_UPPER":27,
+    "MAX_ANGLE_LOWER":27,
     "MOTORS_DELAY":0.0,
 
     "_comment_radar": "Radar config section .....",
