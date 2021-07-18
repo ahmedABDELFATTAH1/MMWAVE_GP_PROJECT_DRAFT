@@ -138,10 +138,10 @@ def scanFace(max_db):
         previous_distance = -1
         while(moveU):
             # for classification 
-            index,distance,db_frame = get_dist_mag(False, max_db)
+            # index,distance,db_frame = get_dist_mag(False, max_db)
 
             # for collecting data from single point 
-            # index,distance,db_frame = radar.collect_n_samples(n_samples,n_readings)
+            index,distance,db_frame = radar.collect_n_samples(n_samples,n_readings)
             # distance = error_correction(previous_distance , distance)
             print("######################################")
             print("upperMoter.distance = ",distance)
@@ -170,10 +170,10 @@ def scanFace(max_db):
         moveU = True  #to enter the next column
         upperDirection = not upperDirection #toggle direction of upper motor
         # for classification 
-        index,distance,db_frame = get_dist_mag(False, max_db)
+        # index,distance,db_frame = get_dist_mag(False, max_db)
 
         # for collecting data from single point 
-        # index,distance,db_frame = radar.collect_n_samples(n_samples,n_readings)
+        index,distance,db_frame = radar.collect_n_samples(n_samples,n_readings)
         # distance = error_correction(previous_distance , distance)
         if (distance != -1):
             dResult.append(distance)
@@ -500,8 +500,8 @@ if __name__ == "__main__":
     radar = Radar()
     radar.setup_radar()
     arduino = set_up()
-    # folder = "flat_Experements/"
-    folder = "3D_Experements/"
+    folder = "flat_Experements/"
+    # folder = "3D_Experements/"
     # radar = Radar()
     # arduino = set_up()
     # radar.setup_radar()
@@ -518,8 +518,8 @@ if __name__ == "__main__":
 
     # move_with_keyboard ()
     file_name = input("enter experment name \n")
-    _3D_mapping(file_name, folder)
-    # _3D_collect_data(file_name,1000,folder)
+    # _3D_mapping(file_name, folder)
+    _3D_collect_data(file_name,1000,folder)
     # _mag_dist_mapping(file_name,1,False)
 
 
