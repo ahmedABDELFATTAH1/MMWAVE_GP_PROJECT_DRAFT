@@ -1,16 +1,16 @@
 import serial
-import time
+# import time
 import numpy as np
 import json
 import zmq
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import json
 import numpy as np
 from scipy import stats
-from tensorflow import keras
-from tensorflow.keras import layers,Sequential,models
+# from tensorflow import keras
+# from tensorflow.keras import layers,Sequential,models
 
-import os.path
+# import os.path
 
 correct_frames = 0
 dropped_frames = 0 
@@ -274,9 +274,14 @@ class Radar():
         newLine = line.decode("utf-8")  
         # print (newLine)           
         # !R \t counter \t frame_size \t 109 \t 255 0-->-140 /r/n
+
         if newLine == "I am Easy\r\n":
+            print("\'I am Easy\\r\\n\' frame, frame has been dropped !!!!!")
+            dropped_frames+=1
             return None
         if newLine == "Front End \x02\r\n":
+            print("\'Front End \\x02\\r\\n\' frame, frame has been dropped !!!!!")
+            dropped_frames+=1
             return None
     
         # splittedLine = newLine.split("!R")
@@ -418,9 +423,9 @@ class Radar():
             index, distance, db_frame = self.detect_peaks(frame, True, 0)
             distances.append(distance)
             db_frames.append(db_frame)
-        print("before eliminating None values :: ", distances)
+        # print("before eliminating None values :: ", distances)
         distances = [0 if v is None else v for v in distances]
-        print("after eliminating None values :: ", distances)
+        # print("after eliminating None values :: ", distances)
         z = np.abs(stats.zscore(np.array(distances)))
         # print(np.where(z > 3))
         # print(z)
@@ -428,34 +433,36 @@ class Radar():
         # print(indecies)
         # print(z[indecies])
         distances = np.array(distances)
-        print(distances[indecies])
+        # print(distances[indecies])
         avrg_dis = np.average(distances[indecies])
         
         # print(indecies)
         # print(z[indecies])
         db_frames = np.array(db_frames).astype(float)
-        print(db_frames[indecies])
+        # print(db_frames[indecies])
         avrg_db = np.average(db_frames[indecies])
         
         return "error inde is used",avrg_dis,avrg_db
     
 if __name__ == "__main__":
     radar = Radar()
-    radar.setup_radar() 
+    radar.setup_radar()
+    radar.setup_radar_all_configurations()    
+    
     while(1):
-        context = zmq.Context()
-        zmq_socket = context.socket(zmq.PUB)    
-        zmq_socket.bind("tcp://127.0.0.1:5558")
-        # count=0
+        # context = zmq.Context()
+        # zmq_socket = context.socket(zmq.PUB)    
+        # zmq_socket.bind("tcp://127.0.0.1:5558")
+        # # count=0
         while True:
             frame_payload = radar.get_reading()
             # print(len(frame_payload))
             # print(count)
             # count+=1
-            frame = {
-                "FRAME":frame_payload
-            }
-            zmq_socket.send_json(frame)
+            # frame = {
+            #     "FRAME":frame_payload
+            # }
+            # zmq_socket.send_json(frame)
             print("#correct frames :: ", correct_frames)
             print("#dropped farmes :: ", dropped_frames)
             # index,distance,magnitude = radar.detect_peaks(frame["FRAME"],True,0)

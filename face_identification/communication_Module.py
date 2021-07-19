@@ -1,3 +1,4 @@
+from typing import Collection
 import numpy as np
 import plotly.express as px
 import pandas as pd
@@ -15,7 +16,8 @@ import json
 import numpy as np
 import random
 from tensorflow import keras
-from tensorflow.keras import layers,Sequential,models
+from arduino_configuration import *
+# from tensorflow.keras import layers,Sequential,models
 
 import os.path
 
@@ -56,15 +58,8 @@ state_min = configuration_json["STATE_MIN"]
 state_max = configuration_json["STATE_MAX"]
 state_counter = state_min
 
-
-class Motors(Enum):
-    LOWER = 'l'
-    UPPER = 'u'
-
-
-class Direction(Enum):
-    POSITIVE = 1
-    NEGATIVE = -1
+Collect_data = False
+positive_scane = True
 
 
 def error_correction(previous,current):
@@ -83,33 +78,33 @@ def error_correction(previous,current):
             return previous
 
 
-def set_up():
-    """
-    setting up the arduino baud rate and port
-    """
-    arduino = serial.Serial()
-    arduino.baudrate = baud_rate
-    arduino.port = arduino_port
-    arduino.open()
-    print(arduino.is_open)
-    print(arduino.readline())
-    return arduino
+# def set_up():
+#     """
+#     setting up the arduino baud rate and port
+#     """
+#     arduino = serial.Serial()
+#     arduino.baudrate = baud_rate
+#     arduino.port = arduino_port
+#     arduino.open()
+#     print("Arduino is connected :: ",arduino.is_open)
+#     print("Arduino state is :: ",arduino.readline())
+#     return arduino
 
 
 
 
-def moveMotor(motor: Motors, stepSize, direction: Direction):
-    """
-    Moves motor in arduino
-    input : motor --> can be either 'l' for lower motor 
-                  or  'u' for upper motor
-        stepSize --> (integer) number of steps that the motor will move (step = 0.45 angle)
-        direction -->  either -1 or 1 
-    """
-    txt = motor + str(direction * stepSize) + "$"
-    arduino.write(bytes(txt, 'utf-8'))
-    time.sleep(motors_delay)
-    arduino.readline()
+# def moveMotor(motor: Motors, stepSize, direction: Direction):
+#     """
+#     Moves motor in arduino
+#     input : motor --> can be either 'l' for lower motor 
+#                   or  'u' for upper motor
+#         stepSize --> (integer) number of steps that the motor will move (step = 0.45 angle)
+#         direction -->  either -1 or 1 
+#     """
+#     txt = motor + str(direction * stepSize) + "$"
+#     arduino.write(bytes(txt, 'utf-8'))
+#     time.sleep(motors_delay)
+#     arduino.readline()
 
 
 def scanFace(max_db):
@@ -121,14 +116,14 @@ def scanFace(max_db):
             uResult[] --> angle of the upper motor of each reading
             lResult[] --> angle of the lower motor of each reading
     """
-    global n_samples,n_readings
+    global n_samples,n_readings,Collect_data
     upperDirection = True
     moveU = True
     moveL = True
     uCounter = Direction.NEGATIVE.value * ((maxStepsOfUpper*scanningUpperStepSize)/2)
     lCounter = Direction.NEGATIVE.value * ((maxStepsOfLower*scanningLowerStepSize)/2)
-    moveMotor(Motors.LOWER.value, ((maxStepsOfLower*scanningLowerStepSize)/2), Direction.NEGATIVE.value)
-    moveMotor(Motors.UPPER.value, ((maxStepsOfUpper*scanningUpperStepSize)/2), Direction.POSITIVE.value)
+    arduino.moveMotor(Motors.LOWER.value, ((maxStepsOfLower*scanningLowerStepSize)/2), Direction.NEGATIVE.value)
+    arduino.moveMotor(Motors.UPPER.value, ((maxStepsOfUpper*scanningUpperStepSize)/2), Direction.POSITIVE.value)
     count = 0
     count_lower_end = 0
     dResult =[]
@@ -138,10 +133,13 @@ def scanFace(max_db):
         previous_distance = -1
         while(moveU):
             # for classification 
-            # index,distance,db_frame = get_dist_mag(False, max_db)
+            if Collect_data :
+                index,distance,db_frame = radar.collect_n_samples(n_samples,n_readings)
+            else: 
+                index,distance,db_frame = get_dist_mag(False, max_db)
 
             # for collecting data from single point 
-            index,distance,db_frame = radar.collect_n_samples(n_samples,n_readings)
+            
             # distance = error_correction(previous_distance , distance)
             print("######################################")
             print("upperMoter.distance = ",distance)
@@ -154,12 +152,12 @@ def scanFace(max_db):
                 uResult.append((uCounter * 0.45*np.pi)/180) # getting upper angle in radian
                 lResult.append((lCounter * 0.45*np.pi)/180) # getting lower angle in radian
             if(upperDirection): # if my direction is upper i will move up 1 step
-                moveMotor(Motors.UPPER.value, scanningUpperStepSize,
+                arduino.moveMotor(Motors.UPPER.value, scanningUpperStepSize,
                           Direction.NEGATIVE.value) 
                 uCounter += scanningUpperStepSize
                 count+=1
             else: # else I will move down 1 step
-                moveMotor(Motors.UPPER.value, scanningUpperStepSize,
+                arduino.moveMotor(Motors.UPPER.value, scanningUpperStepSize,
                           Direction.POSITIVE.value)
                 uCounter -= scanningUpperStepSize
                 count+=1
@@ -169,38 +167,42 @@ def scanFace(max_db):
             previous_distance = distance
         moveU = True  #to enter the next column
         upperDirection = not upperDirection #toggle direction of upper motor
-        # for classification 
-        # index,distance,db_frame = get_dist_mag(False, max_db)
+       
 
-        # for collecting data from single point 
-        index,distance,db_frame = radar.collect_n_samples(n_samples,n_readings)
+        
+        if Collect_data :
+            # for collecting data from single point 
+            index,distance,db_frame = radar.collect_n_samples(n_samples,n_readings)
+        else: 
+             # for classification 
+            index,distance,db_frame = get_dist_mag(False, max_db)
         # distance = error_correction(previous_distance , distance)
         if (distance != -1):
             dResult.append(distance)
             uResult.append((uCounter * 0.45*np.pi)/180)
             lResult.append((lCounter * 0.45*np.pi)/180)
-        moveMotor(Motors.LOWER.value, scanningLowerStepSize, Direction.POSITIVE.value) #moving lower motor 1 step 
+        arduino.moveMotor(Motors.LOWER.value, scanningLowerStepSize, Direction.POSITIVE.value) #moving lower motor 1 step 
         lCounter += (scanningLowerStepSize*Direction.POSITIVE.value)
         count_lower_end += 1
         if count_lower_end > maxStepsOfLower: #quitting scan if we have reached maximum steps of lower motor
             moveL = False 
         previous_distance = distance
-    moveMotor(Motors.LOWER.value, ((maxStepsOfLower*scanningLowerStepSize)/2), Direction.NEGATIVE.value)
+    arduino.moveMotor(Motors.LOWER.value, ((maxStepsOfLower*scanningLowerStepSize)/2), Direction.NEGATIVE.value)
     if (upperDirection):
-        moveMotor(Motors.UPPER.value, ((maxStepsOfUpper*scanningUpperStepSize)/2), Direction.NEGATIVE.value)
+        arduino.moveMotor(Motors.UPPER.value, ((maxStepsOfUpper*scanningUpperStepSize)/2), Direction.NEGATIVE.value)
     else:
-        moveMotor(Motors.UPPER.value, ((maxStepsOfUpper*scanningUpperStepSize)/2), Direction.POSITIVE.value)
+        arduino.moveMotor(Motors.UPPER.value, ((maxStepsOfUpper*scanningUpperStepSize)/2), Direction.POSITIVE.value)
     return dResult,uResult,lResult
     
-def get_reading_message(): 
-    context = zmq.Context()
-    consumer_receiver = context.socket(zmq.SUB)
-    consumer_receiver.setsockopt_string(zmq.SUBSCRIBE, "")    
-    consumer_receiver.connect("tcp://127.0.0.1:5558")
-    frame = consumer_receiver.recv_json()
-    consumer_receiver.close()    
-    print(len(frame["FRAME"]))    
-    return frame["FRAME"]
+# def get_reading_message(): 
+#     context = zmq.Context()
+#     consumer_receiver = context.socket(zmq.SUB)
+#     consumer_receiver.setsockopt_string(zmq.SUBSCRIBE, "")    
+#     consumer_receiver.connect("tcp://127.0.0.1:5558")
+#     frame = consumer_receiver.recv_json()
+#     consumer_receiver.close()    
+#     print(len(frame["FRAME"]))    
+#     return frame["FRAME"]
 
 
 def get_dist_mag(calibiration_mode, max_db):
@@ -254,7 +256,7 @@ def scan2D_lower(calibiration_mode, max_db):
     lCounter = 0
     xResult = []
     yResult = []
-    moveMotor(Motors.LOWER.value, ((maxStepsOfLower*scanningLowerStepSize)/2), Direction.NEGATIVE.value)
+    arduino.moveMotor(Motors.LOWER.value, ((maxStepsOfLower*scanningLowerStepSize)/2), Direction.NEGATIVE.value)
     previous_distance = -1
     while(lCounter <= maxStepsOfLower): 
         global_counter = lCounter      
@@ -273,11 +275,11 @@ def scan2D_lower(calibiration_mode, max_db):
         # else:
         #     yResult.append(0)
         #     xResult.append((lCounter * scanningLowerStepSize))        
-        moveMotor(Motors.LOWER.value, scanningLowerStepSize, Direction.POSITIVE.value) #moving 1 step
+        arduino.moveMotor(Motors.LOWER.value, scanningLowerStepSize, Direction.POSITIVE.value) #moving 1 step
         lCounter += 1
         # previous_distance = distance
 
-    moveMotor(Motors.LOWER.value, ((maxStepsOfLower*scanningLowerStepSize)/2), Direction.NEGATIVE.value)
+    arduino.moveMotor(Motors.LOWER.value, ((maxStepsOfLower*scanningLowerStepSize)/2), Direction.NEGATIVE.value)
     return xResult,yResult
 
 
@@ -289,13 +291,13 @@ def move_with_keyboard ():
     while val != "e":
         val = input("Enter your value: ") 
         if (val == "d"):
-            moveMotor(Motors.LOWER.value, scanningLowerStepSize, Direction.POSITIVE.value)
+            arduino.moveMotor(Motors.LOWER.value, scanningLowerStepSize, Direction.POSITIVE.value)
         elif (val == "a"):
-            moveMotor(Motors.LOWER.value, scanningLowerStepSize, Direction.NEGATIVE.value)
+            arduino.moveMotor(Motors.LOWER.value, scanningLowerStepSize, Direction.NEGATIVE.value)
         elif (val == "w"):
-            moveMotor(Motors.UPPER.value, scanningUpperStepSize, Direction.NEGATIVE.value)
+            arduino.moveMotor(Motors.UPPER.value, scanningUpperStepSize, Direction.NEGATIVE.value)
         elif (val == "s"):
-            moveMotor(Motors.UPPER.value, scanningUpperStepSize, Direction.POSITIVE.value)
+            arduino.moveMotor(Motors.UPPER.value, scanningUpperStepSize, Direction.POSITIVE.value)
 
 
 
@@ -313,9 +315,9 @@ def calibrate_scene():
     distances = []
     return max_db
 
-def make_prediction(reading):
-        result = g_model.predict(np.reshape(reading,(1,len(reading))))>.8
-        return result
+# def make_prediction(reading):
+#         result = g_model.predict(np.reshape(reading,(1,len(reading))))>.8
+#         return result
 
 def trigger_get_data():
     print("getting the reading now")
@@ -487,10 +489,10 @@ def _mag_dist_mapping(exp_name,scaning_number = 2 ,increase_upper_angel = False)
             readings = []
 
             if increase_upper_angel:
-                moveMotor(Motors.UPPER.value, scanningUpperStepSize, Direction.NEGATIVE.value)
+                arduino.moveMotor(Motors.UPPER.value, scanningUpperStepSize, Direction.NEGATIVE.value)
 
     if increase_upper_angel == True:   
-        moveMotor(Motors.UPPER.value, scanningUpperStepSize*scaning_number, Direction.POSITIVE.value)
+        arduino.moveMotor(Motors.UPPER.value, scanningUpperStepSize*scaning_number, Direction.POSITIVE.value)
     
     plt.show()  
 
@@ -499,9 +501,11 @@ if __name__ == "__main__":
 
     radar = Radar()
     radar.setup_radar()
-    arduino = set_up()
-    folder = "flat_Experements/"
-    # folder = "3D_Experements/"
+    radar.setup_radar_all_configurations()
+    arduino = Arduino()
+    arduino.setup_arduino()
+    
+    
     # radar = Radar()
     # arduino = set_up()
     # radar.setup_radar()
@@ -517,9 +521,24 @@ if __name__ == "__main__":
     # t1.join()
 
     # move_with_keyboard ()
-    file_name = input("enter experment name \n")
-    # _3D_mapping(file_name, folder)
-    _3D_collect_data(file_name,1000,folder)
+    positive_scane = True if input("is this positive scane ? (y or n, invalide input equal \"negative scane\") \n>>") == 'y' else False
+    if positive_scane:
+        folder = "3D_Experements/"
+        print("positive scaning, saving folder is :: "+folder)
+    else:
+        folder = "flat_Experements/"
+        print("negative scaning, saving folder is :: "+folder)
+
+    file_name = input("enter experment name \n>>")
+
+    Collect_data = True if input("please select mode: (1 or 2, invalide input equal \"Scane and detect\") \n 1) Scane and detect \n 2) Collect data \n>>") == '2' else False
+    if Collect_data :
+        print("start collecting data ...")
+        _3D_collect_data(file_name,1000,folder)
+    else:
+        print("start scaning data ...")
+        _3D_mapping(file_name, folder)
+    # _3D_collect_data(file_name,1000,folder)
     # _mag_dist_mapping(file_name,1,False)
 
 
