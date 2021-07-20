@@ -501,7 +501,7 @@ if __name__ == "__main__":
 
     radar = Radar()
     radar.setup_radar()
-    radar.setup_radar_all_configurations()
+    # radar.setup_radar_all_configurations()
     arduino = Arduino()
     arduino.setup_arduino()
     
