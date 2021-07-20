@@ -1,12 +1,0 @@
-ply
-format binary_little_endian 1.0
-comment Created by Open3D
-element vertex 3
-property double x
-property double y
-property double z
-element face 0
-property list uchar uint vertex_indices
-end_header
-Å„/ù`Àø´ªˆ‰\aÀ1ö§aÀt6Şk®Ëx@
-P†p·z@Ák}~+{@úT=Õy	YÀ²¨ç_EWÀø£G›ñSÀ
