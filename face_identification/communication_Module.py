@@ -12,6 +12,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 import zmq
 import pickle
+from matplotlib import pyplot
 import json
 import numpy as np
 import random
@@ -515,7 +516,7 @@ def plot_hist(y):
     # Set total number of bins in the histogram
     bins_num = [i for i in range(min_dist,max_dist,bin_size)]#256
     # Get the image histogram
-    n = np.histogram(my_sample_y , bins = bins_num) 
+    n = plt.hist(my_sample_y , bins = bins_num) 
     hist = n[0]
     bin_edges = n[1]
     # Calculate centers of bins
@@ -534,9 +535,12 @@ def plot_hist(y):
     index_of_max_val = np.argmax(inter_class_variance)
     threshold = bin_mids[:-1][index_of_max_val]
     print("Otsu's algorithm implementation thresholding result: ", threshold)
-#     plt.title("histogram") 
-#     plt.axvline(threshold, color='r')
-#     plt.show()
+    plt.figure(1)
+    plt.title("histogram") 
+    plt.axvline(threshold, color='r')
+    # plt.show()
+    plt.savefig('assets/UI_folder/original_hist.png')
+    plt.figure(2)
     hist = [ hist[i] if bin_edges[i] < threshold else 0 for i in range(hist.size)]
     my_sample_y = my_sample_y[my_sample_y < threshold]
     
@@ -557,9 +561,14 @@ def plot_hist(y):
     n = np.histogram(new_my_sample_y , bins = bins_num) 
     hist_new = n[0]
     bin_edges_new = n[1]
-#     pyplot.hist(x, bins_num, alpha=0.5, label='x')
-#     pyplot.hist(y, bins_num, alpha=0.5, label='y')
-#     pyplot.legend(loc='upper right')
+    x = my_sample_y
+    y_ = new_my_sample_y
+
+    plt.hist(x, bins_num, alpha=0.5, label='x')
+    plt.hist(y_, bins_num, alpha=0.5, label='y')
+    plt.legend(loc='upper right')
+    plt.savefig('assets/UI_folder/modifidied_hist.png')
+    plt.cla()
 #     pyplot.show()
     
     

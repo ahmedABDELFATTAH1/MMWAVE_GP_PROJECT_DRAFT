@@ -21,6 +21,7 @@ from arduino_configuration import Arduino
 import plotly.express as px
 import base64
 import io
+import os, shutil
 from communication_Module import _3D_mapping
 np.random.seed(1)
 
@@ -62,7 +63,7 @@ min_depth = np.amin(my_sample_y)
 fig3d = px.scatter_3d(df, x='X (mm)', y='Y (mm)', z='Z (mm)', color='Depth', title="ٌRadar Point Cloud:" , range_color=[min_depth,max_depth],color_continuous_scale=color , opacity=1)
 fig3d.update_traces(marker=dict(size=marker_size, line=dict(width=0)))             
 
-folder_name = "UI_folder/"
+folder_name = "assets/UI_folder/"
 scan_name = "temp"
 
 
@@ -142,61 +143,39 @@ app.layout = html.Div(children=[
       html.Div(style={
         # "justifyContent": "center",
         "justifyItems": "center",
-        "textAlign": "center"}, children=[ html.Button('Start Scan', id='start-scan', n_clicks=0),
+        "textAlign": "center"}, children=[ html.Button('Start Scan', id='start-scan', n_clicks=0 ),
         ]),       
         dcc.Graph(id="graph-3d-run",figure=fig3d,style={
             'height':'700px',
             "display" : "none"
         }),
-        html.Div(html.Img(style={"marginLeft": "20px",
+        html.Div(html.Img(style={
+                                 
+                                 "display" : "none",
+                                 "marginLeft": "20px",
                                  "alignSelf": "center",
-                                 "margin": "auto",
-                                 "display" : "none"
+                                 "margin": "auto"
                                  },
-                          id = "original_hist" ,width="80px", height="80px", src="assets/company_logo.png"), style={
+                          id = "original_hist" ,width="640px", height="480px", src = "UI_folder/original_hist.png"), style={
         "justifyContent": "center",
         "justifyItems": "center",
         "textAlign": "center"
     }),
-    html.Div(html.Img(style={"marginLeft": "20px",
+    html.Div(html.Img(style={   "marginLeft": "20px",
                                  "alignSelf": "center",
                                  "margin": "auto",
                                  "display" : "none"
                                  },
-                          id = "modified_hist",width="80px", height="80px", src="assets/company_logo.png"), style={
-        "justifyContent": "center",
+                          id = "modified_hist",width="640px", height="480px",src = "UI_folder/original_hist.png"), style={
+       "justifyContent": "center",
         "justifyItems": "center",
         "textAlign": "center"
-    })
+    }), 
+    html.Div(id ="temp",children= 0 ,style={"display" : "none"}), 
 
 ], style=body)
 
 
-
-scanning = False
-scanning_count = -1
-Done_scanning = False
-
-# @app.callback([Output('start-scan','style'),Output('save-scan','style')],
-#     [Input('start-scan', 'n_clicks')]
-#     ,[State('start-scan', 'style'),State('file_name_id', 'value')])
-# def start_scan_event(n_clicks,button_style,file_name):  
-#     print(file_name)  
-#     global scanning , scanning_count
-#     if scanning:        
-#         return red_button_style,disabled_button_style
-#     else:
-#         if scanning_count < 0 :
-#             scanning_count +=1
-#             return white_button_style,disabled_button_style
-#         if file_name is None or file_name == "" or file_name.replace(" ", "")==0:
-#             return white_button_style,disabled_button_style
-#         if len(file_name.split(' '))> 1:
-#             return white_button_style,disabled_button_style
-#         scanning = True    
-#         Scan3d(file_name)
-#         scanning = False
-#         return white_button_style,white_button_style
 
 def filter_points(x,y,z):
     new_samples_x = []
@@ -209,12 +188,26 @@ def filter_points(x,y,z):
             new_samples_z.append(z)
     return np.array(new_samples_x),np.array(new_samples_y),np.array(new_samples_z)
 
+
+
+@app.callback(
+              Output('start-scan' , 'style'),
+              Output('temp' , 'children'),
+              [Input('start-scan', 'n_clicks')])
+def update_output_1(n_clicks):
+    if n_clicks > 0 :
+        return {'display': 'none'} , 1
+
+
 @app.callback(Output('graph-3d-run', 'style'),
               Output('graph-3d-run', 'figure'),
               Output('original_hist', 'style'),
               Output('modified_hist', 'style'),
-              [Input('start-scan', 'n_clicks')])
+              Output('original_hist' , 'src'),
+              Output('modified_hist' , 'src'),
+              [Input('temp', 'children')])
 def update_output(n_clicks):
+    clear_ui_folder()
     dist = None
     upper_angle = None
     lower_angle = None
@@ -250,118 +243,29 @@ def update_output(n_clicks):
         fig = px.scatter_3d(df, x='X (mm)', y='Y (mm)', z='Z (mm)', color='Depth', title="ٌ3d Mapping" , range_color=[min_depth,max_depth],color_continuous_scale=color , opacity=1)
         fig.update_traces(marker=dict(size=marker_size, line=dict(width=0)))             
 
-        return {'display': 'block'} , fig , {'display': 'block'} ,{'display': 'block'} 
+        plot_hist(my_sample_y)
 
-   
-
-        # list_of_names = ["waleed_14_7_100_x.txt","waleed_14_7_100_y.txt","waleed_14_7_100_z.txt"]
-        # for file_name in list_of_names:
-        #     print(len(file_name))
-        #     numbers = np.loadtxt("3D_Experements/"+file_name)            
-        #     #print(numbers[0:100])
-        #     if(file_name.split('.')[0][-1].lower()=='x'):
-        #         dist = numbers
-        #     elif(file_name.split('.')[0][-1].lower()=='y'):
-        #         upper_angle = numbers
-        #     elif(file_name.split('.')[0][-1].lower()=='z'):
-        #         lower_angle = numbers
-        # if(dist is None or upper_angle is None or lower_angle is None):
-        #     return {'display': 'block'} , fig3d , {'display': 'block'} ,{'display': 'block'}
-        # else:   
-        #     my_sample_x = np.array(dist)*np.cos(upper_angle)*np.sin(lower_angle)*-1
-        #     my_sample_y = np.array(dist)*np.cos(upper_angle)*np.cos(lower_angle)
-        #     my_sample_z = np.array(dist)*np.sin(upper_angle)*-1
-
-        #     # my_sample_x,my_sample_y,my_sample_z = filter_points(my_sample_x,my_sample_y,my_sample_z)
-
-        #     df = pd.DataFrame(my_sample_x,columns=['X (mm)'])
-        #     df['Y (mm)'] = my_sample_y
-        #     df['Z (mm)'] = my_sample_z
-            
-        #     min_depth = 0
-        #     max_depth = 0
-
-        #     df['Depth'] = my_sample_y
-        #     max_depth = np.amax(my_sample_y)
-        #     min_depth = np.amin(my_sample_y)
-
-          
-        #     fig = px.scatter_3d(df, x='X (mm)', y='Y (mm)', z='Z (mm)', color='Depth', title="ٌ3d Mapping" , range_color=[min_depth,max_depth],color_continuous_scale=color , opacity=1)
-        #     fig.update_traces(marker=dict(size=marker_size, line=dict(width=0)))             
-
-        #     return {'display': 'block'} , fig3d , {'display': 'block'} ,{'display': 'block'} 
+        return {'display': 'flex'} , fig , {'display': 'flex'} ,{'display': 'flex'} , 'assets/UI_folder/original_hist.png' , 'assets/UI_folder/modifidied_hist.png'
 
     
     return {'display': 'none'} , fig3d , {'display': 'none'} , {'display': 'none'}
 show_figures = False
 
-# def get_reading_message(): 
-#     context = zmq.Context()
-#     consumer_receiver = context.socket(zmq.SUB)
-#     consumer_receiver.RCVTIMEO = 1000
-#     consumer_receiver.setsockopt_string(zmq.SUBSCRIBE, "")    
-#     consumer_receiver.connect("tcp://127.0.0.1:5558")
-#     frame = None
-#     try:
-#         frame = consumer_receiver.recv_json()   
-#     except:
-#         pass
-#     # print(frame)
-#     consumer_receiver.close() 
-#     return frame 
-
-
-
-
-@app.callback(
-    [dash.dependencies.Output('frame_visualise_button', 'children'),dash.dependencies.Output('frame_visualise_button', 'style'),
-    dash.dependencies.Output('graph-update','disabled')],
-    [dash.dependencies.Input('frame_visualise_button', 'n_clicks')])
-def update_output1(n_clicks): 
-    print("hello")   
-    global show_figures
-    print(n_clicks)
-    if n_clicks%2 ==0:  
-        show_figures = False
-        return "Show Readings",white_button_style , True
-    else:
-        show_figures = True
-        return "Stop Readings",red_button_style , False
-   
     
-
-
-
-
-@app.callback(
-    Output(component_id='live-graph', component_property='figure'),
-    [Input('graph-update', 'n_intervals')],
-    [State('live-graph', 'figure')]
-)
-def update_graph_scatter(n,figure):
-    print("hello12")
-    if not show_figures:
-        return figure
-    frame = np.random.uniform(low=0.5, high=13.3, size=(50,))    
-    frame = get_reading_message()
-    if frame is None:
-        return figure
-    # print(frame)
-    frame = frame["FRAME"]  
-    index, distance, db_frame = radar.detect_peaks(frame, True, None)
-    print("index value = "+str(index))
-    fig = update_2d_graph(frame, index, 2.1)
-    fig.data[0].update(mode='lines+markers')
-    fig.update_layout(uirevision="foo")
-    return fig
-
-
-
+def clear_ui_folder():
+    folder = 'assets/UI_folder'
+    for filename in os.listdir(folder):
+        file_path = os.path.join(folder, filename)
+        try:
+            if os.path.isfile(file_path) or os.path.islink(file_path):
+                os.unlink(file_path)
+            elif os.path.isdir(file_path):
+                shutil.rmtree(file_path)
+        except Exception as e:
+            print('Failed to delete %s. Reason: %s' % (file_path, e))
 
     
 if __name__ == '__main__': 
-    df = px.data.tips()
-    print (df.head()) 
     setup()
     app.run_server()
     
