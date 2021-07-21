@@ -20,7 +20,10 @@ from arduino_configuration import *
 # from tensorflow.keras import layers,Sequential,models
 
 import os.path
-
+##########################################
+radar = Radar()
+arduino = Arduino()
+##########################################
 calibrateLowerStepSize = 10
 calibrateLowerTotalStepsCount = 20
  
@@ -116,7 +119,7 @@ def scanFace(max_db):
             uResult[] --> angle of the upper motor of each reading
             lResult[] --> angle of the lower motor of each reading
     """
-    global n_samples,n_readings,Collect_data
+    global n_samples,n_readings,Collect_data, radar, arduino
     upperDirection = True
     moveU = True
     moveL = True
@@ -216,7 +219,7 @@ def get_dist_mag(calibiration_mode, max_db):
 
     output : (peak_index , distance_value , db_value)
     """
-    global readings, global_counter, counter_depth_get_dist_mag, max_depth
+    global readings, global_counter, counter_depth_get_dist_mag, max_depth, radar, arduino
     # frame = get_reading_message()
     # frame = trigger_get_data()
     # index, distance, db_frame = radar.detect_peaks(frame, calibiration_mode, max_db)
@@ -251,7 +254,7 @@ def scan2D_lower(calibiration_mode, max_db):
     output : x [] --> x axis points 
             y [] --> y axis points
     """ 
-    global global_distance, global_counter
+    global global_distance, global_counter, arduino
     
     lCounter = 0
     xResult = []
@@ -287,6 +290,7 @@ def move_with_keyboard ():
     """
     moves the motor with keyboard input
     """
+    global arduino
     val = ""
     while val != "e":
         val = input("Enter your value: ") 
@@ -320,6 +324,7 @@ def calibrate_scene():
 #         return result
 
 def trigger_get_data():
+    global radar, arduino
     print("getting the reading now")
     radar.trigger_reading()
     while(True):
@@ -397,6 +402,7 @@ def _3D_mapping(exp_name, folder):
     ##moving the radar to the left (or right) with number of steps of scanning / 2
     #then make a 3d scan
     #then return back to the center of the object
+    
     dist,uAngel,lAngel = scanFace(0)
 
     ## getting the x , y , z axis of the points read by the radar
@@ -409,7 +415,7 @@ def _3D_mapping(exp_name, folder):
     #save_3d_experement(my_sample_x,my_sample_y,my_sample_z,exp_name)
 
     save_3d_experement(np.array(dist),np.array(uAngel),np.array(lAngel),exp_name, folder)
-
+    return dist,uAngel,lAngel
     ##getting the min and max to estimate the depth of colors , then drawing the points
     # max_y = np.amax(my_sample_y)
     # min_y = np.amin(my_sample_y)
@@ -446,7 +452,7 @@ def _mag_dist_mapping(exp_name,scaning_number = 2 ,increase_upper_angel = False)
                                       false --> don`t move upper motor each time I repeat experiment
     """
 
-    global readings, distances  # list of db(y) , distance(x)
+    global readings, distances, arduino # list of db(y) , distance(x)
     max_db = calibrate_scene ()
     
     print ("MAX_dB = ",max_db)
@@ -497,15 +503,79 @@ def _mag_dist_mapping(exp_name,scaning_number = 2 ,increase_upper_angel = False)
     plt.show()  
 
 
-if __name__ == "__main__":
+from skimage.filters import threshold_minimum
 
-    radar = Radar()
+min_dist = 0
+max_dist=800
+bin_size = 4
+def plot_hist(y):
+    global min_dist,max_dist,bin_size
+    my_sample_y = y
+    my_sample_y = my_sample_y[~np.isnan(my_sample_y)]
+    # Set total number of bins in the histogram
+    bins_num = [i for i in range(min_dist,max_dist,bin_size)]#256
+    # Get the image histogram
+    n = np.histogram(my_sample_y , bins = bins_num) 
+    hist = n[0]
+    bin_edges = n[1]
+    # Calculate centers of bins
+    bin_mids = (bin_edges[:-1] + bin_edges[1:]) / 2.
+    # Iterate over all thresholds (indices) and get the probabilities w1(t), w2(t)
+    weight1 = np.cumsum(hist)
+    weight2 = np.cumsum(hist[::-1])[::-1]
+    # Get the class means mu0(t)
+    mean1 = np.cumsum(hist * bin_mids) / weight1
+    # Get the class means mu1(t)
+    mean2 = (np.cumsum((hist * bin_mids)[::-1]) / weight2[::-1])[::-1]
+    mean1 = np.nan_to_num(mean1)
+    mean2 = np.nan_to_num(mean2)
+    inter_class_variance = weight1[:-1] * weight2[1:] * (mean1[:-1] - mean2[1:]) ** 2
+    # Maximize the inter_class_variance function val
+    index_of_max_val = np.argmax(inter_class_variance)
+    threshold = bin_mids[:-1][index_of_max_val]
+    print("Otsu's algorithm implementation thresholding result: ", threshold)
+#     plt.title("histogram") 
+#     plt.axvline(threshold, color='r')
+#     plt.show()
+    hist = [ hist[i] if bin_edges[i] < threshold else 0 for i in range(hist.size)]
+    my_sample_y = my_sample_y[my_sample_y < threshold]
+    
+    total_value = np.sum(hist)
+    hist_prob = hist / total_value
+    hist_cumsum = np.cumsum(hist_prob)
+    new_hist = hist_cumsum * 800
+#     print ("hist_cumsum:: ",hist_cumsum)
+    new_hist = np.floor(new_hist).astype(int)
+#     print ("new_hist:: ",new_hist)
+    new_my_sample_y = np.zeros(len(my_sample_y))
+    for idx in range (len(my_sample_y)):
+        for i in range(len(bin_edges)):
+            if bin_edges[i]> my_sample_y[idx] :
+#                 print("my_sample_y",my_sample_y[idx],"bin_edges",bin_edges[i],"i",i,"new_hist" ,new_hist[i-1])
+                new_my_sample_y[idx] = new_hist[i-1]
+                break
+    n = np.histogram(new_my_sample_y , bins = bins_num) 
+    hist_new = n[0]
+    bin_edges_new = n[1]
+#     pyplot.hist(x, bins_num, alpha=0.5, label='x')
+#     pyplot.hist(y, bins_num, alpha=0.5, label='y')
+#     pyplot.legend(loc='upper right')
+#     pyplot.show()
+    
+    
+#     print("oh",hist)
+#     print("nh",hist_n)
+#     print("oy",bin_edges)
+#     print("ny",new_my_sample_y)
+    return threshold,hist,bin_edges,hist_new,bin_edges_new
+def setup():
+    global radar, arduino
     radar.setup_radar()
     # radar.setup_radar_all_configurations()
-    arduino = Arduino()
     arduino.setup_arduino()
-    
-    
+
+if __name__ == "__main__":
+    setup()
     # radar = Radar()
     # arduino = set_up()
     # radar.setup_radar()

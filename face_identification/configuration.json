@@ -1,7 +1,7 @@
 
 {
-    "ARDUINO_PORT":"COM3",
-    "SENSOR_PORT":"COM4" ,
+    "ARDUINO_PORT":"COM8",
+    "SENSOR_PORT":"COM10" ,
     "SENSOR_FORMAT":"TSV" ,
     "BIN_RESOLUTION":4,
     "STATE_MIN":0,
