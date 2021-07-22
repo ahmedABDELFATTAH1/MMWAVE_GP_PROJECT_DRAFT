@@ -71,8 +71,9 @@ colors = {
     'background': '#FFFFFF',
     'text': '#111111',
     'mytext': '#111111',
-    'btncolor' : '#6495ED',
+    'btncolor' : '#0170ad',
     'disabled_color' : '#AAAAAA'
+
 }
 
 
@@ -100,23 +101,21 @@ body = {
     "position": "absolute"
 }
 app.layout = html.Div(children=[
-    html.Div(children='FACE RECOGNATION USING RADAR SYSTEM', style={
-        'textAlign': 'center',
-        'color': colors['text'],
-        'marginTop':"10px",
-        'fontSize':"40px"
-    }),
-    html.Div(style={
-        # "float": "right"
-    }, children=[html.Div(html.Img(style={#"marginLeft": "20px",
+    # html.Div(children='FACE RECOGNATION USING RADAR SYSTEM', style={
+    #     'textAlign': 'center',
+    #     'color': colors['text'],
+    #     'marginTop':"10px",
+    #     'fontSize':"40px"
+    # }),
+    html.Div(html.Img(style={#"marginLeft": "20px",
                                  "alignSelf": "center",
                                  "margin": "auto",
                                  },
-                          width="250px", height="250px", src="assets/gp_icon.png"), style={
+                          width="350px", height="350px", src="assets/gp_icon.png"), style={
         # "justifyContent": "center",
         # "justifyItems": "center",
         "textAlign": "center"
-    }),html.H1(children='SPONSERED BY GOODIX EGYPT', style={
+    }),html.H1(children='SPONSERED BY ', style={
         'fontSize': "20px",
         'fontWeight':'bold',
         'color': colors['mytext'],
@@ -131,19 +130,17 @@ app.layout = html.Div(children=[
         "justifyContent": "center",
         "justifyItems": "center",
         "textAlign": "center"
-    })]),
-    
-    #    dcc.Interval(
-    #     id='graph-update',
-    #     interval=500,
-    #     n_intervals=0,
-    #     disabled=False
-    # )   ,
+    }),
    
       html.Div(style={
         # "justifyContent": "center",
         "justifyItems": "center",
-        "textAlign": "center"}, children=[ html.Button('Start Scan', id='start-scan', n_clicks=0 ),
+        "textAlign": "center"}, children=[ html.Button('Start Scan', id='start-scan', n_clicks=0 , style={
+                  "width": "700px",
+                   'height': "60px", 
+                   "background": colors['btncolor'],
+                   "color": colors['background'], 
+                   'font-size' : '25px'}),
         ]),       
         dcc.Graph(id="graph-3d-run",figure=fig3d,style={
             'height':'700px',
@@ -156,7 +153,7 @@ app.layout = html.Div(children=[
                                  "alignSelf": "center",
                                  "margin": "auto"
                                  },
-                          id = "original_hist" ,width="640px", height="480px", src = "UI_folder/original_hist.png"), style={
+                          id = "original_hist" ,width="640px", height="480px"), style={
         "justifyContent": "center",
         "justifyItems": "center",
         "textAlign": "center"
@@ -166,10 +163,10 @@ app.layout = html.Div(children=[
                                  "margin": "auto",
                                  "display" : "none"
                                  },
-                          id = "modified_hist",width="640px", height="480px",src = "UI_folder/original_hist.png"), style={
-       "justifyContent": "center",
+                          id = "modified_hist",width="640px", height="480px"), style={
+        "justifyContent": "center",
         "justifyItems": "center",
-        "textAlign": "center"
+        "textAlign": "center", 
     }), 
     html.Div(id ="temp",children= 0 ,style={"display" : "none"}), 
 
@@ -245,7 +242,7 @@ def update_output(n_clicks):
 
         plot_hist(my_sample_y)
 
-        return {'display': 'flex'} , fig , {'display': 'flex'} ,{'display': 'flex'} , 'assets/UI_folder/original_hist.png' , 'assets/UI_folder/modifidied_hist.png'
+        return {'display': 'flex'} , fig , {'display': 'flex', "marginLeft": "20px", "alignSelf": "center", "margin": "auto"} ,{'display': 'flex', "marginLeft": "20px", "alignSelf": "center", "margin": "auto"} , 'assets/UI_folder/original_hist.png' , 'assets/UI_folder/modifidied_hist.png'
 
     
     return {'display': 'none'} , fig3d , {'display': 'none'} , {'display': 'none'}
