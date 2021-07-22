@@ -505,18 +505,26 @@ def _mag_dist_mapping(exp_name,scaning_number = 2 ,increase_upper_angel = False)
 
 
 from skimage.filters import threshold_minimum
+import random
 
 min_dist = 0
 max_dist=800
 bin_size = 4
 def plot_hist(y):
     global min_dist,max_dist,bin_size
+    
+    n1 = random.randint(0,100)
+    n2 = random.randint(0,100)
     my_sample_y = y
     my_sample_y = my_sample_y[~np.isnan(my_sample_y)]
     # Set total number of bins in the histogram
     bins_num = [i for i in range(min_dist,max_dist,bin_size)]#256
     # Get the image histogram
-    n = plt.hist(my_sample_y , bins = bins_num) 
+
+    
+    # plt.figure(n1)
+    
+    n = plt.hist(my_sample_y , bins = bins_num, label='Original Histogram') 
     hist = n[0]
     bin_edges = n[1]
     # Calculate centers of bins
@@ -535,14 +543,23 @@ def plot_hist(y):
     index_of_max_val = np.argmax(inter_class_variance)
     threshold = bin_mids[:-1][index_of_max_val]
     print("Otsu's algorithm implementation thresholding result: ", threshold)
-    plt.figure(1)
-    plt.title("histogram") 
-    plt.axvline(threshold, color='r')
+    
+    plt.title("Original Histogram & Otsu's Threshold") 
+    plt.xlabel("Horizontal Distances (mm)")
+    plt.ylabel("Bin Value (bin size 4mm)")
+    plt.axvline(threshold, color='r', label="Otsu's Threshold")
+    plt.legend(loc='upper right')
     # plt.show()
-    plt.savefig('assets/UI_folder/original_hist.png')
-    plt.figure(2)
+    plt.savefig('assets/UI_folder/original_hist_'+str(n1)+'.png')
+    # plt.close()
+    # plt.figure(n2)
+    plt.clf()
+
+    plt.title("Foreground Histogram & Equalized Foreground Histogram") 
+    plt.xlabel("Horizontal Distances (mm)")
+    plt.ylabel("Bin Value (bin size 4mm)")
     hist = [ hist[i] if bin_edges[i] < threshold else 0 for i in range(hist.size)]
-    my_sample_y = my_sample_y[my_sample_y < threshold]
+    my_sample_y = my_sample_y[my_sample_y <= threshold]
     
     total_value = np.sum(hist)
     hist_prob = hist / total_value
@@ -558,17 +575,19 @@ def plot_hist(y):
 #                 print("my_sample_y",my_sample_y[idx],"bin_edges",bin_edges[i],"i",i,"new_hist" ,new_hist[i-1])
                 new_my_sample_y[idx] = new_hist[i-1]
                 break
-    n = np.histogram(new_my_sample_y , bins = bins_num) 
+
+
+    plt.hist(my_sample_y, bins_num, alpha=0.8, label='Foreground Histogram')
+    n = plt.hist(new_my_sample_y, bins_num, alpha=0.8, label='Equalized Foreground Histogram')
     hist_new = n[0]
     bin_edges_new = n[1]
-    x = my_sample_y
-    y_ = new_my_sample_y
 
-    plt.hist(x, bins_num, alpha=0.5, label='x')
-    plt.hist(y_, bins_num, alpha=0.5, label='y')
+    
+    
     plt.legend(loc='upper right')
-    plt.savefig('assets/UI_folder/modifidied_hist.png')
-    plt.cla()
+    plt.savefig('assets/UI_folder/modifidied_hist_'+str(n2)+'.png')
+    # plt.close()
+    plt.clf()
 #     pyplot.show()
     
     
@@ -576,7 +595,7 @@ def plot_hist(y):
 #     print("nh",hist_n)
 #     print("oy",bin_edges)
 #     print("ny",new_my_sample_y)
-    return threshold,hist,bin_edges,hist_new,bin_edges_new
+    return threshold,hist,bin_edges,hist_new,bin_edges_new,n1,n2
 def setup():
     global radar, arduino
     radar.setup_radar()

@@ -37,6 +37,8 @@ external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 
+
+
 color = px.colors.sequential.Rainbow[::-1]
 marker_size = 5
 
@@ -72,7 +74,8 @@ colors = {
     'text': '#111111',
     'mytext': '#111111',
     'btncolor' : '#0170ad',
-    'disabled_color' : '#AAAAAA'
+    'disabled_color' : '#AAAAAA',
+    'footer_background' :'#6bc3e3'
 
 }
 
@@ -98,7 +101,7 @@ body = {
     'backgroundColor': colors['background'],
     "width": "100%",
     "height": "100%",
-    "position": "absolute"
+    "position":"absolute"
 }
 app.layout = html.Div(children=[
     # html.Div(children='FACE RECOGNATION USING RADAR SYSTEM', style={
@@ -107,31 +110,15 @@ app.layout = html.Div(children=[
     #     'marginTop':"10px",
     #     'fontSize':"40px"
     # }),
-    html.Div(html.Img(style={#"marginLeft": "20px",
+    html.Div(html.Img(style={"marginTop": "100px",
                                  "alignSelf": "center",
                                  "margin": "auto",
                                  },
-                          width="350px", height="350px", src="assets/gp_icon.png"), style={
-        # "justifyContent": "center",
-        # "justifyItems": "center",
-        "textAlign": "center"
-    }),html.H1(children='SPONSERED BY ', style={
-        'fontSize': "20px",
-        'fontWeight':'bold',
-        'color': colors['mytext'],
-        "alignSelf": "center",
-        "margin": "auto",
-        "textAlign": "center"
-    }), html.Div(html.Img(style={"marginLeft": "20px",
-                                 "alignSelf": "center",
-                                 "margin": "auto",
-                                 },
-                          width="80px", height="80px", src=app.get_asset_url("company_logo.png")), style={
+                          width="450px", height="450px", src="assets/gp_icon_with_logo.png"), style={
         "justifyContent": "center",
         "justifyItems": "center",
         "textAlign": "center"
     }),
-   
       html.Div(style={
         # "justifyContent": "center",
         "justifyItems": "center",
@@ -141,11 +128,12 @@ app.layout = html.Div(children=[
                    "background": colors['btncolor'],
                    "color": colors['background'], 
                    'font-size' : '25px'}),
-        ]),       
+        ]),   
         dcc.Graph(id="graph-3d-run",figure=fig3d,style={
             'height':'700px',
             "display" : "none"
         }),
+
         html.Div(html.Img(style={
                                  
                                  "display" : "none",
@@ -153,7 +141,7 @@ app.layout = html.Div(children=[
                                  "alignSelf": "center",
                                  "margin": "auto"
                                  },
-                          id = "original_hist" ,width="640px", height="480px"), style={
+                          id = "original_hist" ,width="640px", height="480px", src ='',className='img'), style={
         "justifyContent": "center",
         "justifyItems": "center",
         "textAlign": "center"
@@ -163,12 +151,43 @@ app.layout = html.Div(children=[
                                  "margin": "auto",
                                  "display" : "none"
                                  },
-                          id = "modified_hist",width="640px", height="480px"), style={
+                          id = "modified_hist",width="640px", height="480px", src ='',className='img'), style={
         "justifyContent": "center",
         "justifyItems": "center",
         "textAlign": "center", 
     }), 
-    html.Div(id ="temp",children= 0 ,style={"display" : "none"}), 
+    html.H1(id = 'result_div' ,children='', style={
+        "justifyContent": "center",
+        "justifyItems": "center",
+        "textAlign": "center", 
+        'color': colors['text'],
+        # 'marginTop':"auto",
+        "height":  "10rem",
+        # 'marginBottom':"auto",
+        'fontSize':"40px"
+    }),  
+    html.Div(id ="temp",children= 0 ,style={"display" : "none"}),
+    html.Div( id = "footer_div",children ="© 2021 mmVision.  All rights reserved for Goodix Egypt.",style= {
+        "justifyContent": "center",
+        "justifyItems": "center",
+        "textAlign": "center", 
+        # "width": "100%",
+        # "height" : "40px",
+        "position":"fixed",
+        # "buttom":'0',
+        "background": colors['btncolor'],
+        "color": colors['background'],
+        'font-size' : '20px', 
+        # "position": "fixed",
+        "bottom": 0,
+        "left": 0,
+        "right": 0,
+        "height":  "4rem",
+        # 'marginTop':"auto"
+        # "padding": "1rem 1rem",
+        # "background-color": "gray",
+    })
+    
 
 ], style=body)
 
@@ -194,7 +213,101 @@ def filter_points(x,y,z):
 def update_output_1(n_clicks):
     if n_clicks > 0 :
         return {'display': 'none'} , 1
+    return {"width": "700px",'height': "60px","background": colors['btncolor'],"color": colors['background'],'font-size' : '25px'} , 0
 
+
+
+import random
+
+min_dist = 0
+max_dist=800
+bin_size = 4
+def plot_hist_dash(y):
+    global min_dist,max_dist,bin_size
+    
+    n1 = random.randint(0,100)
+    n2 = random.randint(0,100)
+    my_sample_y = y
+    my_sample_y = my_sample_y[~np.isnan(my_sample_y)]
+    # Set total number of bins in the histogram
+    bins_num = [i for i in range(min_dist,max_dist,bin_size)]#256
+    # Get the image histogram
+
+    
+    # plt.figure(n1)
+    
+    n = plt.hist(my_sample_y , bins = bins_num, label='Original Histogram') 
+    hist = n[0]
+    bin_edges = n[1]
+    # Calculate centers of bins
+    bin_mids = (bin_edges[:-1] + bin_edges[1:]) / 2.
+    # Iterate over all thresholds (indices) and get the probabilities w1(t), w2(t)
+    weight1 = np.cumsum(hist)
+    weight2 = np.cumsum(hist[::-1])[::-1]
+    # Get the class means mu0(t)
+    mean1 = np.cumsum(hist * bin_mids) / weight1
+    # Get the class means mu1(t)
+    mean2 = (np.cumsum((hist * bin_mids)[::-1]) / weight2[::-1])[::-1]
+    mean1 = np.nan_to_num(mean1)
+    mean2 = np.nan_to_num(mean2)
+    inter_class_variance = weight1[:-1] * weight2[1:] * (mean1[:-1] - mean2[1:]) ** 2
+    # Maximize the inter_class_variance function val
+    index_of_max_val = np.argmax(inter_class_variance)
+    threshold = bin_mids[:-1][index_of_max_val]
+    print("Otsu's algorithm implementation thresholding result: ", threshold)
+    
+    plt.title("Original Histogram & Otsu's Threshold") 
+    plt.xlabel("Horizontal Distances (mm)")
+    plt.ylabel("Bin Value (bin size 4mm)")
+    plt.axvline(threshold, color='r', label="Otsu's Threshold")
+    plt.legend(loc='upper right')
+    # plt.show()
+    plt.savefig('assets/UI_folder/original_hist_'+str(n1)+'.png')
+    # plt.close()
+    # plt.figure(n2)
+    plt.clf()
+
+    plt.title("Foreground Histogram & Equalized Foreground Histogram") 
+    plt.xlabel("Horizontal Distances (mm)")
+    plt.ylabel("Bin Value (bin size 4mm)")
+    hist = [ hist[i] if bin_edges[i] < threshold else 0 for i in range(hist.size)]
+    my_sample_y = my_sample_y[my_sample_y <= threshold]
+    
+    total_value = np.sum(hist)
+    hist_prob = hist / total_value
+    hist_cumsum = np.cumsum(hist_prob)
+    new_hist = hist_cumsum * 800
+#     print ("hist_cumsum:: ",hist_cumsum)
+    new_hist = np.floor(new_hist).astype(int)
+#     print ("new_hist:: ",new_hist)
+    new_my_sample_y = np.zeros(len(my_sample_y))
+    for idx in range (len(my_sample_y)):
+        for i in range(len(bin_edges)):
+            if bin_edges[i]> my_sample_y[idx] :
+#                 print("my_sample_y",my_sample_y[idx],"bin_edges",bin_edges[i],"i",i,"new_hist" ,new_hist[i-1])
+                new_my_sample_y[idx] = new_hist[i-1]
+                break
+
+
+    plt.hist(my_sample_y, bins_num, alpha=0.8, label='Foreground Histogram')
+    n = plt.hist(new_my_sample_y, bins_num, alpha=0.8, label='Equalized Foreground Histogram')
+    hist_new = n[0]
+    bin_edges_new = n[1]
+
+    
+    
+    plt.legend(loc='upper right')
+    plt.savefig('assets/UI_folder/modifidied_hist_'+str(n2)+'.png')
+    # plt.close()
+    plt.clf()
+#     pyplot.show()
+    
+    
+#     print("oh",hist)
+#     print("nh",hist_n)
+#     print("oy",bin_edges)
+#     print("ny",new_my_sample_y)
+    return threshold,hist,bin_edges,hist_new,bin_edges_new,n1,n2
 
 @app.callback(Output('graph-3d-run', 'style'),
               Output('graph-3d-run', 'figure'),
@@ -202,6 +315,7 @@ def update_output_1(n_clicks):
               Output('modified_hist', 'style'),
               Output('original_hist' , 'src'),
               Output('modified_hist' , 'src'),
+              Output('result_div' , 'children'),
               [Input('temp', 'children')])
 def update_output(n_clicks):
     clear_ui_folder()
@@ -234,15 +348,15 @@ def update_output(n_clicks):
 
         df['X (mm)'] = my_sample_x
         df['Y (mm)'] = my_sample_y
-        df['Z (mm)'] = my_sample_z
+        df['Z (mm)'] = my_sample_z 
         # df.head()
 
-        fig = px.scatter_3d(df, x='X (mm)', y='Y (mm)', z='Z (mm)', color='Depth', title="ٌ3d Mapping" , range_color=[min_depth,max_depth],color_continuous_scale=color , opacity=1)
-        fig.update_traces(marker=dict(size=marker_size, line=dict(width=0)))             
+        fig = px.scatter_3d(df, x='X (mm)', y='Y (mm)', z='Z (mm)', color='Depth', range_color=[min_depth,max_depth],color_continuous_scale=color , opacity=1)  
+        fig.update_layout(title_text="ٌ3d Mapping", title_x=0.5)          
+        fig.update_traces(marker=dict(size=marker_size, line=dict(width=0))) 
+        threshold,hist,bin_edges,hist_new,bin_edges_new,n1,n2 = plot_hist_dash(my_sample_y)
 
-        plot_hist(my_sample_y)
-
-        return {'display': 'flex'} , fig , {'display': 'flex', "marginLeft": "20px", "alignSelf": "center", "margin": "auto"} ,{'display': 'flex', "marginLeft": "20px", "alignSelf": "center", "margin": "auto"} , 'assets/UI_folder/original_hist.png' , 'assets/UI_folder/modifidied_hist.png'
+        return {'display': 'flex' , "marginBottom": "20px"} , fig , {'display': 'flex', "alignSelf": "center", "margin": "auto", "marginLeft": "20px",} ,{'display': 'flex', "alignSelf": "center", "margin": "auto", "marginLeft": "20px",} , '../assets/UI_folder/original_hist_'+str(n1)+'.png' , 'assets/UI_folder/modifidied_hist_'+str(n2)+'.png' ,'enta gamed ya nosa <3'
 
     
     return {'display': 'none'} , fig3d , {'display': 'none'} , {'display': 'none'}
