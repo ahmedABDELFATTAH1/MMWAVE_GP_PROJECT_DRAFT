@@ -16,7 +16,7 @@ from matplotlib import pyplot
 import json
 import numpy as np
 import random
-from tensorflow import keras
+# from tensorflow import keras
 from arduino_configuration import *
 # from tensorflow.keras import layers,Sequential,models
 
