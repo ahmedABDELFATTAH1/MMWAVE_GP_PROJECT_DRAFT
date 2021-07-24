@@ -1,16 +1,7 @@
 import serial
-# import time
 import numpy as np
 import json
-import zmq
-# import matplotlib.pyplot as plt
-import json
-import numpy as np
 from scipy import stats
-# from tensorflow import keras
-# from tensorflow.keras import layers,Sequential,models
-
-# import os.path
 
 correct_frames = 0
 dropped_frames = 0 
@@ -33,8 +24,6 @@ class Radar():
         self.false_rate = self.configuration_json["CFAR_CONFIG"]["RATE_FA"]
         self.threashold = self.configuration_json["THRESHOLD"]
         self.frame_size = self.configuration_json["FRAME_SIZE"]
-        # self.g_model = models.load_model('model_naive3.h5')
-        # self.f_model = models.load_model('face_model.h5')
         '''
         define a connection through the serial port
         '''
@@ -69,28 +58,12 @@ class Radar():
             clear buffer of the pc of the communication
         '''
         return self.ser.read_all()
-        # self.ser.reset_input_buffer()
-        # self.ser.reset_output_buffer()
+
     def check_buffer(self):
         '''
             clear buffer of the pc of the communication
         '''
         return self.ser.inWaiting()
-
-    def store_readings(self, file_name):
-        num = self.configuration_json["NUMBER_OF_TRAIN_SET"]
-        file = open(file_name, 'a')
-        for _ in range(num):
-            reading = self.get_reading()
-            file.write(reading)
-
-    def retrive_samples(self, file_name):
-        readings = []
-        file = open(file_name, 'r')
-        reading = self.get_reading()
-        file.readline()
-        readings.append(reading)
-        return readings
 
     ####################Configurations_Section#######################
 
@@ -157,58 +130,13 @@ class Radar():
     def setup_radar_set_max_bandwidth (self):
         config_str = "!K00000000"
         self.configure_radar(config_str)
-
-
-    ##################################################################    
-    def save_readings (self):
-        while 1:
-            file = open("radar_readings.txt", "a")
-            line = self.ser.readline()  # read a line from the sensor
-            newLine = line.decode("utf-8")
-            if (newLine[0] == '!'):
-                splittedLine = newLine.split("\t")
-                try :
-                    frame = [int(i) for i in splittedLine[3:len(splittedLine)-1]]
-                    if (len(frame) == 512):
-                        # print (len(frame))
-                        file.write(str(frame)+"\n") 
-                        file.close()
-                    else:
-                        print ('error in frame size')
-                except:
-                    print ('can\'t create the frame')    
-
+    ##################################################################      
     def setup_radar(self):
         if(self.is_open()):
             self.close()
             self.start()
         else :
             self.start()
-
-
-    def get_median_distance(self, num):  
-        frame = self.get_reading()         
-        indexes,distance =  self.detect_peaks(frame)  
-        if indexes is None:
-            return frame,-1, -1        
-        return frame,indexes,distance
-
-    def range_face_detection(self, frame):
-        '''
-        a simple function to test object within range 
-        '''
-        # print(len(frame))
-        range_start = self.min_distance
-        range_end = self.max_distance
-        bin_resolution = self.bin_resolution
-        bin_start = int(range_start/bin_resolution)
-        bin_end = int(range_end/bin_resolution)
-        face_frame = frame[bin_start:min(bin_end, len(frame))-1]
-        max_index = np.argmax(face_frame)
-        peak_distance = range_start + bin_resolution*max_index
-        #print("there is a peak at distance "+str(peak_distance))
-        #print("with magnitude =  "+str(max(face_frame)))
-        return peak_distance, max(face_frame)
 
     def get_reading(self):
         '''
@@ -219,38 +147,7 @@ class Radar():
         if reading is not None:
             return reading
         else:
-            return self.get_reading()
-
-
-    def get_frame(self):
-        frame = []
-        frame_range = False
-        while True:
-            try:
-                oneByte = self.ser.read(1).decode('utf-8')
-            except:
-                print("sorry wrong format please convert to tsv mode")
-                raise TypeError            
-            if frame_range: 
-                if oneByte == "\r\n":
-                    #end of frame
-                    frame_range = False             
-                    return frame  
-                elif oneByte == "!R":                    
-                    frame = []
-                else:
-                    try:
-                        num = int(oneByte)
-                        frame.append(num)
-                    except ValueError:
-                        frame = []
-                        frame_range = False                         
-            if oneByte == "!R":
-                #this means start of the desired frame 
-                frame_range = True
-            
-
-                
+            return self.get_reading()                
 
     def read_magnitude(self):
         '''
@@ -258,21 +155,9 @@ class Radar():
         '''
         global dropped_frames,correct_frames
         correct_frames+=1
-        #print(line)
-        # self.ser.reset_input_buffer()
-        # while self.ser.in_waiting <2600:
-        #     print("waiting")
-        #     pass
         line = self.ser.readline()  # read a line from the sensor
-        # print ("in waiting :: ",self.ser.in_waiting)
-        # line =""
-        # while len(line) == 0:
-        #     line = self.clear_buffer()
-        # print(line)
-        # print ("wanted length :: ", len(line))
-
-        newLine = line.decode("utf-8")  
-        # print (newLine)           
+    
+        newLine = line.decode("utf-8")           
         # !R \t counter \t frame_size \t 109 \t 255 0-->-140 /r/n
 
         if newLine == "I am Easy\r\n":
@@ -283,12 +168,7 @@ class Radar():
             print("\'Front End \\x02\\r\\n\' frame, frame has been dropped !!!!!")
             dropped_frames+=1
             return None
-    
-        # splittedLine = newLine.split("!R")
-
-        # print (splittedLine)
         splittedLine = newLine.split("\t")
-        # print(splittedLine[0])
         if (splittedLine[0] != '!R'):  # check for start frame
             print("\'!R\' is missing, frame has been dropped !!!!!")
             dropped_frames+=1
@@ -306,53 +186,16 @@ class Radar():
         else:
             print("\'\\r\\n\' are missing, frame has been dropped ")
             dropped_frames+=1
-        # index = -1
-        # try:
-        #     # print("here")
-        #     index = splittedLine.index('\r\n')  # seach for the end frame
-        #     # print(index)
-        # except ValueError as e:
-        #     #print(e)
-        #     return None
-        # if (index == -1):
-        #     return None
-        # else:
-            # try:
-            #     frame = [int(i)
-            #              for i in splittedLine[3:index]]  # get the frame
-            #     #print("message",splittedLine[0:4])
-            #     if(len(frame) != self.frame_size):
-            #         return None
-            #     return frame
-            # except:
-            #     return None
-            
         return None
-
-    def get_max_magnitude_in_range(self,frame):
-        min_index_range = int(self.min_distance/self.bin_resolution)
-        max_index_range = int(self.max_distance/self.bin_resolution)
-        max_index = np.argmax(frame[min_index_range:max_index_range])
-        max_index = min_index_range + max_index
-        max_distance = max_index * self.bin_resolution
-        max_magnitude = frame[max_index]
-        return max_index,max_distance,max_magnitude
-
-
-    def make_prediction(self,reading,model):
-        result = model.predict(np.reshape(reading,(1,len(reading))))>.3
-        return result[0][0]
-        
+    
     def detect_peaks(self,frame, calibiration_mode, max_db):        
-       
-        # face_prediction = self.make_prediction(frame,self.g_model)
-        face_body_prediction = True#self.make_prediction(frame,self.f_model)
         """
         Detect peaks with CFAR algorithm.
         num_train: Number of training cells.
         num_guard: Number of guard cells.
         rate_fa: False alarm rate. 
         """
+        face_body_prediction = True
         num_train = self.background_number
         num_guard = self.guard_number
         
@@ -443,7 +286,7 @@ class Radar():
         avrg_db = np.average(db_frames[indecies])
         
         return "error inde is used",avrg_dis,avrg_db
-    
+
 if __name__ == "__main__":
     radar = Radar()
     radar.setup_radar()
@@ -468,5 +311,57 @@ if __name__ == "__main__":
             # index,distance,magnitude = radar.detect_peaks(frame["FRAME"],True,0)
             # print(distance)
 
+################################################################################################################
+####################################### Unwanted Functions from Radar Class ####################################
+################################################################################################################
+    # def range_face_detection(self, frame):
+    #     '''
+    #     a simple function to test object within range 
+    #     '''
+    #     range_start = self.min_distance
+    #     range_end = self.max_distance
+    #     bin_resolution = self.bin_resolution
+    #     bin_start = int(range_start/bin_resolution)
+    #     bin_end = int(range_end/bin_resolution)
+    #     face_frame = frame[bin_start:min(bin_end, len(frame))-1]
+    #     max_index = np.argmax(face_frame)
+    #     peak_distance = range_start + bin_resolution*max_index
+    #     return peak_distance, max(face_frame)
+    # def get_frame(self):
+    #     frame = []
+    #     frame_range = False
+    #     while True:
+    #         try:
+    #             oneByte = self.ser.read(1).decode('utf-8')
+    #         except:
+    #             print("sorry wrong format please convert to tsv mode")
+    #             raise TypeError            
+    #         if frame_range: 
+    #             if oneByte == "\r\n":
+    #                 #end of frame
+    #                 frame_range = False             
+    #                 return frame  
+    #             elif oneByte == "!R":                    
+    #                 frame = []
+    #             else:
+    #                 try:
+    #                     num = int(oneByte)
+    #                     frame.append(num)
+    #                 except ValueError:
+    #                     frame = []
+    #                     frame_range = False                         
+    #         if oneByte == "!R":
+    #             #this means start of the desired frame 
+    #             frame_range = True
 
+    # def get_max_magnitude_in_range(self,frame):
+    #     min_index_range = int(self.min_distance/self.bin_resolution)
+    #     max_index_range = int(self.max_distance/self.bin_resolution)
+    #     max_index = np.argmax(frame[min_index_range:max_index_range])
+    #     max_index = min_index_range + max_index
+    #     max_distance = max_index * self.bin_resolution
+    #     max_magnitude = frame[max_index]
+    #     return max_index,max_distance,max_magnitude
+    
+    
 
