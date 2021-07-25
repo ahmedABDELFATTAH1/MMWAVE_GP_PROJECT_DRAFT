@@ -19,23 +19,23 @@ from plotly import graph_objs as go
 from PIL import Image
 import plotly.express as px
 import cv2
+import tensorflow as tf
 import pandas as pd
 import matplotlib.pyplot as plt
-from sklearn import preprocessing
-from skimage.filters import threshold_minimum
-import torch
-import keras
-from keras.models import Sequential,Input,Model
-from keras.layers import Dense, Dropout, Flatten
-from keras.layers import Conv2D, MaxPooling2D
-from keras.layers.normalization import BatchNormalization
-from keras.layers.advanced_activations import LeakyReLU
-from sklearn.model_selection import train_test_split
-from sklearn import svm
-from sklearn import metrics
-from keras.models import load_model
-from keras import regularizers
-from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array, load_img
+# from sklearn import preprocessing
+# from skimage.filters import threshold_minimum
+# from keras.models import Sequential,Input,Model
+# from keras.layers import Dense, Dropout, Flatten
+# from keras.layers import Conv2D, MaxPooling2D
+# from keras.layers.normalization import BatchNormalization
+# from keras.layers.advanced_activations import LeakyReLU
+# from sklearn.model_selection import train_test_split
+# from sklearn import svm
+# from sklearn import metrics
+# from keras.models import load_model
+# from keras import regularizers
+# from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array, load_img
+from joblib import dump, load
 np.random.seed(1)
 
 def plot_hist(d,u,l):
@@ -101,7 +101,7 @@ def plot_hist(d,u,l):
     return threshold,hist,bin_edges,hist_new,bin_edges_new
 
 def SVM_pred(d,u,l):
-    model =load_model("SVM/partly_trained.h5")
+    model = load('SVM/rbf_model.pkl') 
     t , h, e , h_n , e_n = plot_hist(d,u,l)
     f = (h_n - np.min(h_n)) /(np.max(h_n) - np.min(h_n))
     data_list = np.array([f])
@@ -159,7 +159,8 @@ def points_to_image(d,u,l,threshold):
     return resized
 
 def nn_pred(img):
-    model =load_model("cnn/partly_trained.h5")
+    model =tf.keras.models.load_model("cnn/final_model.h5")
+    # model =load_model("cnn/partly_trained.h5")
     img = np.reshape(img,(1,64,64, 1))
     result = model.predict(img)
     print("result :: ",result[0][0])
@@ -168,7 +169,9 @@ def nn_pred(img):
 def cnn_pred_one(d,u,l):
     t , h ,e , h_n, e_n= plot_hist(d,u,l)
     img = points_to_image(d,u,l,t)
-    print("is this 3D object :: " ,nn_pred(img))
+    result = nn_pred(img)
+    print("is this 3D object :: ", result )
+    return result
 
 global_reading =np.random.uniform(low=0.5, high=13.3, size=(50,))
 global_index = 1
@@ -219,7 +222,6 @@ colors = {
     'btncolor' : '#0170ad',
     'disabled_color' : '#AAAAAA',
     'footer_background' :'#6bc3e3'
-
 }
 
 
@@ -350,8 +352,8 @@ def filter_points(x,y,z):
 
 
 @app.callback(
-              Output('start-scan' , 'style'),
-              Output('temp' , 'children'),
+              [Output('start-scan' , 'style'),
+              Output('temp' , 'children')],
               [Input('start-scan', 'n_clicks')])
 def update_output_1(n_clicks):
     if n_clicks > 0 :
@@ -474,40 +476,32 @@ def update_output(n_clicks):
         my_sample_x = np.array(x)
         my_sample_y = np.array(y)
         my_sample_z = np.array(z)
-
         df = pd.DataFrame()
-    
         indx = []
         min_depth = 0
         max_depth = 0
-        
-
-        
-           
-           
-    
         df['Depth'] = my_sample_y
-
-
         df['X (mm)'] = my_sample_x
         df['Y (mm)'] = my_sample_y
         df['Z (mm)'] = my_sample_z 
         # df.head()
-
         fig = px.scatter_3d(df, x='X (mm)', y='Y (mm)', z='Z (mm)', color='Depth', range_color=[min_depth,max_depth],color_continuous_scale=color , opacity=1)  
         fig.update_layout(title_text="ٌ3d Mapping", title_x=0.5)          
         fig.update_traces(marker=dict(size=marker_size, line=dict(width=0))) 
         threshold,hist,bin_edges,hist_new,bin_edges_new,n1,n2 = plot_hist_dash(my_sample_y)
-
-        pred = False
-        result = "Result :: "
-        #pred = SVM_pred(dist,uAngel,lAngel)
-        #pred = cnn_pred_one(dist,uAngel,lAngel)
-        if pred:
-            result = result + "Face Detected"
+        pred_cnn = False
+        pred_svm = False
+        result = "Result : "
+        pred_svm = SVM_pred(dist,uAngel,lAngel)
+        pred_cnn = cnn_pred_one(dist,uAngel,lAngel)
+        if pred_svm:
+            result = result + "SVM -> Face Detected, "
         else:
-            result = result + "Face Not Detected"
-
+            result = result + "SVM -> Face Not Detected, "
+        if pred_cnn:
+            result = result + "CNN -> Face Detected, "
+        else:
+            result = result + "CNN -> Face Not Detected, "
         return {'display': 'flex' , "marginBottom": "20px"} , fig , {'display': 'flex', "alignSelf": "center", "margin": "auto", "marginLeft": "20px",} ,{'display': 'flex', "alignSelf": "center", "margin": "auto", "marginLeft": "20px",} , '../assets/UI_folder/original_hist_'+str(n1)+'.png' , 'assets/UI_folder/modifidied_hist_'+str(n2)+'.png' , result
 
     
@@ -529,6 +523,6 @@ def clear_ui_folder():
 
     
 if __name__ == '__main__': 
-    setup()
+    set_up()
     app.run_server()
     
