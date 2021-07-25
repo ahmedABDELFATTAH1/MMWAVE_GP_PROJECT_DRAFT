@@ -1,4 +1,3 @@
-from typing import Mapping
 from communication_Module import *
 from logging import debug
 import dash
@@ -7,25 +6,169 @@ import dash_html_components as html
 import plotly.express as px
 import pandas as pd
 import plotly.graph_objects as go
-import plotly
 from dash.dependencies import Output, Input ,State
 # Create random data with numpy
 import json 
-import sys
-import zmq
-import pickle
 import numpy as np
-from threading import Thread
-from radar_configuration import Radar
-from arduino_configuration import Arduino
 import plotly.express as px
-import base64
-import io
 import os, shutil
 from communication_Module import _3D_mapping
+import numpy as np
+from plotly import offline
+from plotly import graph_objs as go
+from PIL import Image
+import plotly.express as px
+import cv2
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn import preprocessing
+from skimage.filters import threshold_minimum
+import torch
+import keras
+from keras.models import Sequential,Input,Model
+from keras.layers import Dense, Dropout, Flatten
+from keras.layers import Conv2D, MaxPooling2D
+from keras.layers.normalization import BatchNormalization
+from keras.layers.advanced_activations import LeakyReLU
+from sklearn.model_selection import train_test_split
+from sklearn import svm
+from sklearn import metrics
+from keras.models import load_model
+from keras import regularizers
+from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array, load_img
 np.random.seed(1)
 
+def plot_hist(d,u,l):
+    
+    dist = d
+    upper_angle = u
+    lower_angle = l
 
+    my_sample_y = np.array(dist)*np.cos(upper_angle)*np.cos(lower_angle)
+    my_sample_y = my_sample_y[~np.isnan(my_sample_y)]
+
+    # Set total number of bins in the histogram
+    bins_num = [i for i in range(min_dist,max_dist,bin_size)]#256
+
+    
+    # Get the image histogram
+    n = np.histogram(my_sample_y , bins = bins_num) 
+    hist = n[0]
+    bin_edges = n[1]
+    # Calculate centers of bins
+    bin_mids = (bin_edges[:-1] + bin_edges[1:]) / 2.
+    
+    weight1 = np.cumsum(hist)
+    
+    weight2 = np.cumsum(hist[::-1])[::-1]
+    
+    # Get the class means mu0(t)
+    mean1 = np.cumsum(hist * bin_mids) / weight1
+    # Get the class means mu1(t)
+    mean2 = (np.cumsum((hist * bin_mids)[::-1]) / weight2[::-1])[::-1]
+
+    mean1 = np.nan_to_num(mean1)
+    mean2 = np.nan_to_num(mean2)
+    
+
+    
+    inter_class_variance = weight1[:-1] * weight2[1:] * (mean1[:-1] - mean2[1:]) ** 2
+
+    # Maximize the inter_class_variance function val
+    index_of_max_val = np.argmax(inter_class_variance)
+
+    threshold = bin_mids[:-1][index_of_max_val]
+
+    hist = [ hist[i] if bin_edges[i] < threshold else 0 for i in range(hist.size)]
+    my_sample_y = my_sample_y[my_sample_y < threshold]
+    
+    total_value = np.sum(hist)
+    hist_prob = hist / total_value
+    hist_cumsum = np.cumsum(hist_prob)
+    new_hist = hist_cumsum * 800
+    new_hist = np.floor(new_hist).astype(int)
+    new_my_sample_y = np.zeros(len(my_sample_y))
+    for idx in range (len(my_sample_y)):
+        for i in range(len(bin_edges)):
+            if bin_edges[i]> my_sample_y[idx] :
+                new_my_sample_y[idx] = new_hist[i-1]
+                break
+
+    
+    n = np.histogram(new_my_sample_y , bins = bins_num) 
+    hist_new = n[0]
+    bin_edges_new = n[1]
+    return threshold,hist,bin_edges,hist_new,bin_edges_new
+
+def SVM_pred(d,u,l):
+    model =load_model("SVM/partly_trained.h5")
+    t , h, e , h_n , e_n = plot_hist(d,u,l)
+    f = (h_n - np.min(h_n)) /(np.max(h_n) - np.min(h_n))
+    data_list = np.array([f])
+    y_pred = model.predict(data_list)
+    return y_pred == 1
+
+def points_to_image(d,u,l,threshold):
+   
+    dist = d
+    upper_angle = u
+    lower_angle = l
+
+    my_sample_x = np.array(dist)*np.cos(upper_angle)*np.sin(lower_angle)
+    my_sample_y =  np.array(dist)*np.cos(upper_angle)*np.cos(lower_angle)
+    my_sample_z =  np.array(dist)*np.sin(upper_angle)
+    
+    my_sample_x = my_sample_x[~np.isnan(my_sample_x)]
+    my_sample_y = my_sample_y[~np.isnan(my_sample_y)]
+    my_sample_z = my_sample_z[~np.isnan(my_sample_z)]
+
+    
+    min_depth = np.amin(my_sample_y)
+    max_depth = (min_depth + threshold)
+    indx = my_sample_y <= (min_depth + threshold)
+
+    my_sample_x = my_sample_x[indx]
+    my_sample_y = my_sample_y[indx]
+    my_sample_z = my_sample_z[indx]
+    my_sample_y = 1-  (my_sample_y -  np.min(my_sample_y)) / (np.max(my_sample_y) - np.min(my_sample_y))
+    x_min = np.min(my_sample_x)
+    x_max = np.max(my_sample_x)
+    y_min = np.min(my_sample_y)
+    y_max = np.max(my_sample_y)
+    z_min = np.min(my_sample_z)
+    z_max = np.max(my_sample_z)
+    width = 1+(x_max - x_min).astype(int)
+    hight = 1+(z_max - z_min).astype(int)
+
+    img = np.zeros((width,hight))
+    
+    for i in range(len(my_sample_x)):
+        x = (my_sample_x[i] - x_min).astype(int)
+        z = (my_sample_z[i] - z_min).astype(int)
+
+        img[x,z] = my_sample_y[i]
+
+    
+    kernel = np.ones((5,5), np.uint8)
+
+    img_dilation = cv2.dilate(img, kernel, iterations=3)
+
+    dim = (64, 64)    
+    resized = cv2.resize(img_dilation, dim, interpolation = cv2.INTER_AREA)
+    
+    return resized
+
+def nn_pred(img):
+    model =load_model("cnn/partly_trained.h5")
+    img = np.reshape(img,(1,64,64, 1))
+    result = model.predict(img)
+    print("result :: ",result[0][0])
+    return result[0][0] > 0.5 
+
+def cnn_pred_one(d,u,l):
+    t , h ,e , h_n, e_n= plot_hist(d,u,l)
+    img = points_to_image(d,u,l,t)
+    print("is this 3D object :: " ,nn_pred(img))
 
 global_reading =np.random.uniform(low=0.5, high=13.3, size=(50,))
 global_index = 1
@@ -356,7 +499,16 @@ def update_output(n_clicks):
         fig.update_traces(marker=dict(size=marker_size, line=dict(width=0))) 
         threshold,hist,bin_edges,hist_new,bin_edges_new,n1,n2 = plot_hist_dash(my_sample_y)
 
-        return {'display': 'flex' , "marginBottom": "20px"} , fig , {'display': 'flex', "alignSelf": "center", "margin": "auto", "marginLeft": "20px",} ,{'display': 'flex', "alignSelf": "center", "margin": "auto", "marginLeft": "20px",} , '../assets/UI_folder/original_hist_'+str(n1)+'.png' , 'assets/UI_folder/modifidied_hist_'+str(n2)+'.png' ,'enta gamed ya nosa <3'
+        pred = False
+        result = "Result :: "
+        #pred = SVM_pred(dist,uAngel,lAngel)
+        #pred = cnn_pred_one(dist,uAngel,lAngel)
+        if pred:
+            result = result + "Face Detected"
+        else:
+            result = result + "Face Not Detected"
+
+        return {'display': 'flex' , "marginBottom": "20px"} , fig , {'display': 'flex', "alignSelf": "center", "margin": "auto", "marginLeft": "20px",} ,{'display': 'flex', "alignSelf": "center", "margin": "auto", "marginLeft": "20px",} , '../assets/UI_folder/original_hist_'+str(n1)+'.png' , 'assets/UI_folder/modifidied_hist_'+str(n2)+'.png' , result
 
     
     return {'display': 'none'} , fig3d , {'display': 'none'} , {'display': 'none'}
