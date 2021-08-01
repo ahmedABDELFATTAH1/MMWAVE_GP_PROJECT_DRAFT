@@ -22,8 +22,6 @@ import cv2
 import tensorflow as tf
 import pandas as pd
 import matplotlib.pyplot as plt
-import random
-
 # from sklearn import preprocessing
 # from skimage.filters import threshold_minimum
 # from keras.models import Sequential,Input,Model
@@ -157,18 +155,8 @@ def points_to_image(d,u,l,threshold):
 
     dim = (64, 64)    
     resized = cv2.resize(img_dilation, dim, interpolation = cv2.INTER_AREA)
-
-    n = random.randint(0,100)
-    im = img_dilation*255
-    im = Image.fromarray(im)
-    if im.mode == "F":
-        im = im.convert('LA') 
-        
-    # im  = im.transpose(Image.ROTATE_90)
-
-    im.save("assets/UI_folder/2d_img_"+str(n)+".png")
-
-    return resized,n
+    
+    return resized
 
 def nn_pred(img):
     model =tf.keras.models.load_model("cnn/final_model.h5")
@@ -180,10 +168,10 @@ def nn_pred(img):
 
 def cnn_pred_one(d,u,l):
     t , h ,e , h_n, e_n= plot_hist(d,u,l)
-    img,n= points_to_image(d,u,l,t)
+    img = points_to_image(d,u,l,t)
     result = nn_pred(img)
     print("is this 3D object :: ", result )
-    return result,n
+    return result
 
 global_reading =np.random.uniform(low=0.5, high=13.3, size=(50,))
 global_index = 1
@@ -313,16 +301,6 @@ app.layout = html.Div(children=[
         "justifyItems": "center",
         "textAlign": "center", 
     }), 
-    html.Div(html.Img(style={   "marginLeft": "20px",
-                                 "alignSelf": "center",
-                                 "margin": "auto",
-                                 "display" : "none"
-                                 },
-                          id = "2d_img",width="640px", height="480px", src ='',className='img'), style={
-        "justifyContent": "center",
-        "justifyItems": "center",
-        "textAlign": "center", 
-    }), 
     html.H1(id = 'result_div' ,children='', style={
         "justifyContent": "center",
         "justifyItems": "center",
@@ -384,6 +362,7 @@ def update_output_1(n_clicks):
 
 
 
+import random
 
 min_dist = 0
 max_dist=800
@@ -479,10 +458,8 @@ def plot_hist_dash(y):
               Output('graph-3d-run', 'figure'),
               Output('original_hist', 'style'),
               Output('modified_hist', 'style'),
-              Output('2d_img', 'style'),
               Output('original_hist' , 'src'),
               Output('modified_hist' , 'src'),
-              Output('2d_img' , 'src'),
               Output('result_div' , 'children'),
               [Input('temp', 'children')])
 def update_output(n_clicks):
@@ -516,7 +493,7 @@ def update_output(n_clicks):
         pred_svm = False
         result = "Result : "
         pred_svm = SVM_pred(dist,uAngel,lAngel)
-        pred_cnn,n = cnn_pred_one(dist,uAngel,lAngel)
+        pred_cnn = cnn_pred_one(dist,uAngel,lAngel)
         if pred_svm:
             result = result + "SVM -> Face Detected, "
         else:
@@ -525,8 +502,7 @@ def update_output(n_clicks):
             result = result + "CNN -> Face Detected, "
         else:
             result = result + "CNN -> Face Not Detected, "
-
-        return {'display': 'flex' , "marginBottom": "20px"} , fig , {'display': 'flex', "alignSelf": "center", "margin": "auto", "marginLeft": "20px"} ,{'display': 'flex', "alignSelf": "center", "margin": "auto", "marginLeft": "20px",},{'display': 'flex', "alignSelf": "center", "margin": "auto", "marginLeft": "20px",} , '../assets/UI_folder/original_hist_'+str(n1)+'.png' , 'assets/UI_folder/modifidied_hist_'+str(n2)+'.png' , "assets/UI_folder/2d_img_"+str(n)+".png", result
+        return {'display': 'flex' , "marginBottom": "20px"} , fig , {'display': 'flex', "alignSelf": "center", "margin": "auto", "marginLeft": "20px",} ,{'display': 'flex', "alignSelf": "center", "margin": "auto", "marginLeft": "20px",} , '../assets/UI_folder/original_hist_'+str(n1)+'.png' , 'assets/UI_folder/modifidied_hist_'+str(n2)+'.png' , result
 
     
     return {'display': 'none'} , fig3d , {'display': 'none'} , {'display': 'none'}
